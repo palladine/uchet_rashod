@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    {% block header %}
+    <nav class="navbar navbar-light bg-light">
+        <span class="navbar-brand my-0 h1"><a href="{% url 'main' %}">Сервис по учету расходных материалов</a></span>
+        <form class="form-inline" action="{% url 'logout' %}" method="get">
+            <span class="mb-0"><b>{{ user }}</b> ({{ user.get_role_display }})</span>
+            <button class="btn btn-sm btn-outline-primary mx-2" type="submit">Выйти</button>
+        </form>
+    </nav>
+	{% endblock %}
+
+
+</body>
+</html>

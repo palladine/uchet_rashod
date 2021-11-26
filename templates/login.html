@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <div class="ui container">
+        <div class="ui centered grid">
+            <div class="row" style="height: 150px;">
+
+            </div>
+
+            <div class="centered row">
+
+                <div class="column">
+                    <div class="ui centered card" style="min-width: 350px;">
+                        <div class="content center aligned column">
+                            <p class="ui medium header">Учет расходных материалов</p>
+                        </div>
+                        <div class="description" style="padding: 23px;">
+
+                            <form class="ui small form" action="{% url 'login' %}" method="post">
+                                {% csrf_token %}
+                                <div class="field">
+                                    <div class="ui icon input">
+                                        {{ form.login }}
+                                        <i class="user icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="ui icon input">
+                                        {{ form.password}}
+                                        <i class="key icon"></i>
+                                    </div>
+                                </div>
+
+                                <button class="ui custombut button small fluid" type="submit">ВОЙТИ</button>
+                            </form>
+
+                            {% if error %}
+                                <div class="ui error tiny message"><i class="exclamation triangle icon"></i>{{ error }}</div>
+                            {% endif %}
+
+                        </div>
+                        <div class="extra content right aligned column">
+                            <a href="#">Забыл пароль?</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</body>
+</html>
