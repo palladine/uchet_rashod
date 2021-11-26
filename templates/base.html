@@ -4,18 +4,51 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
     {% block header %}
-    <nav class="navbar navbar-light bg-light">
-        <span class="navbar-brand my-0 h1"><a href="{% url 'main' %}">Сервис по учету расходных материалов</a></span>
-        <form class="form-inline" action="{% url 'logout' %}" method="get">
-            <span class="mb-0"><b>{{ user }}</b> ({{ user.get_role_display }})</span>
-            <button class="btn btn-sm btn-outline-primary mx-2" type="submit">Выйти</button>
-        </form>
-    </nav>
-	{% endblock %}
+    <nav>
+        <div class="">
+            <div class="ui grid">
+                <div class="row">
+                    <div class="column ten wide">
+                        <a href="{% url 'main' %}">
+                            <div class="ui header">
+                                Сервис по учету расходных материалов
+                            </div>
+                        </a>
+                    </div>
 
+                    <div class="column five wide">
+                        <div class="row">
+                            <b>{{ user }}</b> ({{ user.get_role_display }})
+                        </div>
+
+                        <div class="row">{{ postoffice }}&nbsp &nbsp &nbsp[{{ postoffice.index }}, {{ postoffice.address }}]</div>
+
+
+                    </div>
+
+                    <div class="column one wide">
+                        <form class="ui small form" action="{% url 'logout' %}" method="get">
+                            <button class="ui custombut button small fluid" type="submit">ВЫЙТИ</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+	{% endblock %}
+    <hr>
+    {% block content %}
+
+    {% endblock %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 </body>
 </html>

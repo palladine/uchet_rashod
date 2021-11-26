@@ -49,7 +49,11 @@ class UserLogout(View):
 class Main(View):
     def get(self, request):
         if request.user.is_authenticated:
-            context = {'user': request.user, 'title': 'Главная', 'role': request.user.role}
+            requestUser = request.user
+            context = {'user': requestUser,
+                       'title': 'Главная',
+                       'role': requestUser.role,
+                       'postoffice': requestUser.postoffice_id}
             return render(request, 'main.html', context=context)
         else:
             return HttpResponseRedirect(reverse('login'))
