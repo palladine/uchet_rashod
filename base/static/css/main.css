@@ -3,40 +3,102 @@
 }
 
 body {
-    background-color: #f1f1f1;
-    margin: 10px 20px;
+    background-color: rgba(200,200,200, .1);
+    font-family: 'Roboto', sans-serif;
 }
 
-.column {
-    padding: 1em 0px !important;
+::selection {
+    background-color: rgba(26, 188, 156, .3);
 }
 
-.extra.content > a {
-    padding-right: 20px;
 
+
+.card {
+    min-width: 380px;
+    max-width: 380px;
+    border-radius: 0px;
+    border: 0px;
+}
+
+.card-header {
+    background-color: rgba(200,200,200, .1);
+    font-weight: 550;
+    font-kerning: none;
+    font-size: 1.2rem;
+    border-radius: 0px;
+}
+
+.card-body {
+    background-color: rgba(200,200,200, .1);
+}
+
+.card-footer {
+    background-color: rgba(200,200,200, .1);
+}
+
+
+.btn {
+    border-radius: 0px;
+}
+
+
+.btn-outline-primary {
+    color: #909090;
+    background-image:none;
+    border-color: #d0d0d0;
+    background-color: #fdfdfd;
+}
+
+.btn-outline-primary:hover {
+    color: rgba(26, 188, 156, .8);
+    border-color: rgba(26, 188, 156, .8);
+    background-color: #fdfdfd;
+}
+
+
+.form-control-sm {
+    border-radius: 0px;
+    background-color: #fdfdfd;
+    border-color: #d0d0d0;
+}
+
+.form-control-sm:focus {
+    border-color: rgba(26, 188, 156, .8);
+    box-shadow: none !important;
+    background-color: #fdfdfd;
+}
+
+.form-control::placeholder {
+    color: #909090;
+    padding: 0px 3px;
+    font-size: 0.75rem;
+}
+
+
+.icon-inside {
+      position: absolute;
+      right: 12px;
+      top: calc(50% - 13px);
+      pointer-events: none;
+      font-size: 16px;
+      font-size: 1.125rem;
+      color: #909090;
+      z-index:3;
+}
+
+a {
+    font-size: 0.9rem;
+}
+
+a, a:visited {
+    color: #909090;
+    text-decoration: none;
 }
 
 a:hover, a:focus {
-    color: #65BEDF !important;
+    color: rgba(26, 188, 156, 1);
 }
 
-.ui.custombut.button {
-  color: #65BEDF !important;
-  border:  1px solid #65bedf;
-  background-color: #fdfdfd;
-  border-radius: 0px;
-}
-
-.ui.input > input {
-    background-color:  #fdfdfd !important;
-    border-radius: 0px !important;
-}
-
-.ui.input > input:focus {
-    border:  1px #65BEDF solid !important;
-    border-radius: 0px !important;
-}
-
-.ui.message {
-    border-radius: 0px;
+.error {
+    color: rgba(220, 0, 5, .8)
 }
