@@ -5,6 +5,7 @@
 body {
     background-color: rgba(200,200,200, .1);
     font-family: 'Roboto', sans-serif;
+    margin: 10px;
 }
 
 ::selection {
@@ -90,15 +91,44 @@ a {
     font-size: 0.9rem;
 }
 
-a, a:visited {
+a, a:visited, a.nav-link, a.nav-link:visited {
     color: #909090;
     text-decoration: none;
 }
 
-a:hover, a:focus {
+a:hover, a:focus, a.nav-link:hover, a.nav-link:focus {
     color: rgba(26, 188, 156, 1);
 }
 
+a.nav-link:hover, a.nav-link:focus {
+    border:1px solid rgba(26, 188, 156, .8);
+    border-right: 1px solid transparent;
+}
+
+
 .error {
     color: rgba(220, 0, 5, .8)
+}
+
+nav.head {
+    min-width: 1250px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #909090;
+}
+
+.menu {
+    min-width: 190px;
+    max-width: 190px;
+    border-right: 1px solid #909090;
+    padding: 0px;
+}
+
+.nav-link {
+    font-size: 0.73rem;
+    text-align: end;
+    border: 1px solid transparent;
+}
+
+.content {
+    min-width: 1060px;
 }

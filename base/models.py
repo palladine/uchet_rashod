@@ -2,22 +2,21 @@ from django.db import models
 
 from django.contrib.auth.models import AbstractUser
 
-# Create your models here.
-
 '''
     Models:
-    0. AbstractUser(username, first_name, last_name, email, is_staff, is_active, date_joined)
-    1. Users (id, last_name, first_name, middle_name, postoffice_id, date_reg, role)
-    2. Postoffice (id, name, index, address)
+    + 1. User (username, password, email, last_name, first_name, , middle_name, postoffice_id, 
+                    is_staff, is_active, date_joined, last_login, role)
+    + 2. Postoffice (name, index, address)
+    
     3. Cartridge (id, nomenclature)
     4. Operation (id, cartridge_id, postoffice_id, amount_up, amount_down, date_operation(db_index=True))
     5. State (id, cartridge_id, postoffice_id, amount)
 
-    !! Добавление первого суперадмина:
+    !! Добавление первого пользователя суперадмина:
     1. null=True (last_name, first_name, postoffice_id)
     2. миграция
     3. manage.py createsuperuser
-    4. null в False 
+    4. null в False (last_name, first_name, postoffice_id)
 '''
 
 
@@ -59,3 +58,14 @@ class Postoffice(models.Model):
     def __str__(self):
         return "{}".format(self.name)
 
+
+
+class Cartridge(models.Model):
+    nomenclature = models.CharField(max_length=75, null=False, blank=False, verbose_name="Номенклатура картриджа")
+
+    class Meta:
+        verbose_name = "Картридж"
+        verbose_name_plural = "Картриджи"
+
+    def __str__(self):
+        return "Картридж {}".format(self.nomenclature)

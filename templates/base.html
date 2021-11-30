@@ -20,52 +20,72 @@
 
 <body>
     {% block header %}
+    <nav class="navbar navbar-light head">
+        <div class="container-fluid">
+                        <div class="row" style="flex-grow: 1">
+                                        <div class="col-7 my-auto">
+                                            <a class="navbar-brand" href="{% url 'main' %}">СЕРВИС УЧЕТА РАСХОДНЫХ МАТЕРИАЛОВ</a>
+                                        </div>
 
 
+                                        <div class="col-4">
+                                            <div class="row">
+                                                <div class="col-12 d-flex justify-content-end">
+                                                    <b>{{ user }}</b>&nbsp &nbsp({{ user.get_role_display }})
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-12 d-flex justify-content-end">
+                                                     {{ postoffice }}&nbsp &nbsp &nbsp[{{ postoffice.index }}, {{ postoffice.address }}]
+                                                </div>
+                                            </div>
+                                        </div>
 
 
-
-
-
-
-    <nav>
-
-            <div class="ui three column middle aligned stackable grid">
-
-                    <div class="column ten wide">
-                        <a href="{% url 'main' %}">
-                            <div class="ui header">
-                                Сервис по учету расходных материалов
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="column four wide">
-                        <div class="row">
-                            <b>{{ user }}</b> ({{ user.get_role_display }})
+                                        <div class="col-1 my-auto">
+                                            <form class="d-flex justify-content-end" action="{% url 'logout' %}" method="get" >
+                                                <button class="btn btn-outline-primary btn-sm shadow-none" type="submit">
+                                                    ВЫЙТИ
+                                                </button>
+                                            </form>
+                                        </div>
                         </div>
-
-                        <div class="row">{{ postoffice }}&nbsp &nbsp &nbsp[{{ postoffice.index }}, {{ postoffice.address }}]</div>
-
-
-                    </div>
-
-                    <div class="content right aligned column two wide">
-                        <form class="ui small form" action="{% url 'logout' %}" method="get" >
-                            <button class="ui custombut button small" type="submit">ВЫЙТИ</button>
-                        </form>
-                    </div>
-
-
-            </div>
+        </div>
     </nav>
-
-
-	{% endblock %}
-
-    {% block content %}
-
     {% endblock %}
+
+
+    <div class="container-fluid">
+
+        <div class="row my-3 d-flex flex-nowrap">
+
+                <div class="col menu">
+                    <nav class="nav flex-column">
+                        {% if role == '1' %}
+                            <a class="nav-link text-uppercase" href="/../admin">Панель администратора</a>
+                            <a class="nav-link text-uppercase" href="#">Добавить почтамт</a>
+                            <a class="nav-link text-uppercase" href="#">Добавить пользователя</a>
+                            <a class="nav-link text-uppercase" href="#">Добавить номенклатуру картриджа</a>
+                            <a class="nav-link text-uppercase" href="#">Отправить на почтамт</a>
+                        {% endif %}
+
+                    </nav>
+                </div>
+
+                <div class="col content d-flex justify-content-center">
+                    {% block content %}
+
+                    {% endblock %}
+                </div>
+
+        </div>
+    </div>
+
+
+
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
