@@ -110,6 +110,10 @@ a.nav-link:hover, a.nav-link:focus {
     color: rgba(220, 0, 5, .8)
 }
 
+.msg {
+    color: rgba(26, 188, 156, .8);
+}
+
 nav.head {
     min-width: 1250px;
     font-size: 0.9rem;
@@ -127,6 +131,8 @@ nav.head {
     font-size: 0.73rem;
     text-align: end;
     border: 1px solid transparent;
+    padding-top: -1px;
+    vertical-align: middle;
 }
 
 .content {

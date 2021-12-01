@@ -7,8 +7,8 @@ from django.contrib.auth.models import AbstractUser
     + 1. User (username, password, email, last_name, first_name, , middle_name, postoffice_id, 
                     is_staff, is_active, date_joined, last_login, role)
     + 2. Postoffice (name, index, address)
+    + 3. Cartridge (id, nomenclature)
     
-    3. Cartridge (id, nomenclature)
     4. Operation (id, cartridge_id, postoffice_id, amount_up, amount_down, date_operation(db_index=True))
     5. State (id, cartridge_id, postoffice_id, amount)
 
@@ -48,7 +48,7 @@ class User(AbstractUser):
 
 class Postoffice(models.Model):
     name = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт")
-    index = models.PositiveIntegerField(null=False, blank=True, default='', verbose_name="Индекс")
+    index = models.CharField(max_length=6, null=False, blank=True, default='', verbose_name="Индекс")
     address = models.CharField(max_length=255, null=False, blank='', default='', verbose_name="Адрес")
 
     class Meta:

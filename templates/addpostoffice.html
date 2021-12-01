@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="row mt-5">
+            <div class="col-4"></div>
+            <div class="col-4 d-flex justify-content-center">
+                <div class="card text-center">
+                    <h4 class="card-header text-uppercase">{{ title }}</h4>
+
+                    <div class="card-body d-flex justify-content-center">
+                        <form action="{% url 'add_postoffice' %}" method="post" class="col-11">
+                            {% csrf_token %}
+
+                            <div class="input-group mb-3">
+                                {{ form.name }}
+                            </div>
+
+
+                            <div class="input-group mb-3">
+                                {{ form.index }}
+                            </div>
+
+
+                            <div class="input-group mb-4">
+                                {{ form.address }}
+                            </div>
+
+                            <button class="btn btn-outline-primary btn-sm col-12 shadow-none" type="submit">
+                                ДОБАВИТЬ
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card-footer">
+                        <div>
+                            {% if msg %}
+                                <div class="msg mt-2 mb-2">
+                                    <i class="fa fa-success"></i>
+                                    {{ msg }}
+                                </div>
+                            {% endif %}
+
+                            {% if error %}
+                                <div class="error mt-2 mb-2">
+                                    <i class="fa fa-warning"></i>
+                                    {{ error }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-4"></div>
+
+
+{% endblock %}
