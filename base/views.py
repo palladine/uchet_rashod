@@ -1,11 +1,10 @@
-from django.shortcuts import render
 from django.views import View
-from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
 from .forms import LoginForm, AddPostofficeForm
 from django.contrib.auth import authenticate, login, logout
 from .models import Postoffice
-
+from django.contrib import messages
 
 
 class UserLogin(View):
@@ -59,34 +58,42 @@ class Main(View):
 
 
 class AddPostoffice(View):
+
     def get(self, request):
         context = {}
-
-        msg = request.session.get('msg', False)
-        error = request.session.get('error', False)
-        request.session['msg'] = False
-        request.session['error'] = False
-
         user = request.user
         form = AddPostofficeForm()
-        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form, 'msg': msg, 'error': error})
+
+        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form})
+
         return render(request, 'addpostoffice.html', context=context)
 
-    def post(self, request):
 
+    def post(self, request):
+        context = {}
         form = AddPostofficeForm(request.POST)
-        context = { 'form': form }
+        context.update({'title': 'Добавление почтамта', 'form': form })
+
         if form.is_valid():
-            name = request.POST.get('name')
+
+            postoffice_name = request.POST.get('postoffice_name')
             index = request.POST.get('index')
             address = request.POST.get('address')
 
             # save
-            postoffice = Postoffice(name=name, index=index, address=address)
+            postoffice = Postoffice(postoffice_name=postoffice_name, index=index, address=address)
             postoffice.save()
-            request.session['msg'] = 'Почтамт добавлен'
-
+            messages.success(request, 'Почтамт добавлен')
             return HttpResponseRedirect(reverse('add_postoffice'))
+
         else:
-            request.session['error'] = form.errors
+            errors = {}
+            for field in form.errors:
+                # field - string
+                for f in form:
+                    if field == f.name:
+                        errors[f.label] = form.errors[field].as_text()
+
+            messages.error(request, errors)
+
         return render(request, 'addpostoffice.html', context=context)

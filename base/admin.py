@@ -15,7 +15,7 @@ class ShowUserAdmin(UserAdmin):
 
 
 class ShowPostofficeAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'name', 'index', 'address']
+    list_display = ['pk', 'postoffice_name', 'index', 'address']
 
 
 class ShowCartridgAdmin(admin.ModelAdmin):

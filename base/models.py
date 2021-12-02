@@ -47,16 +47,16 @@ class User(AbstractUser):
 
 
 class Postoffice(models.Model):
-    name = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт")
-    index = models.CharField(max_length=6, null=False, blank=True, default='', verbose_name="Индекс")
-    address = models.CharField(max_length=255, null=False, blank='', default='', verbose_name="Адрес")
+    postoffice_name = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт")
+    index = models.CharField(max_length=6, null=True, blank=True, default='', verbose_name="Индекс")
+    address = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name="Адрес")
 
     class Meta:
         verbose_name = "Почтамт"
         verbose_name_plural = "Почтамты"
 
     def __str__(self):
-        return "{}".format(self.name)
+        return "{}".format(self.postoffice_name)
 
 
 

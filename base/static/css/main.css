@@ -110,7 +110,7 @@ a.nav-link:hover, a.nav-link:focus {
     color: rgba(220, 0, 5, .8)
 }
 
-.msg {
+.success {
     color: rgba(26, 188, 156, .8);
 }
 
@@ -137,4 +137,12 @@ nav.head {
 
 .content {
     min-width: 1060px;
+}
+
+.ht {
+    font-size: 0.6rem;
+    text-align: end;
+    vertical-align: middle;
+    color: #909090;
+    margin-bottom: -0.4rem;
 }
