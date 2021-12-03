@@ -57,6 +57,7 @@ class Main(View):
             return HttpResponseRedirect(reverse('login'))
 
 
+
 class AddPostoffice(View):
 
     def get(self, request):
@@ -84,16 +85,20 @@ class AddPostoffice(View):
             postoffice = Postoffice(postoffice_name=postoffice_name, index=index, address=address)
             postoffice.save()
             messages.success(request, 'Почтамт добавлен')
+
             return HttpResponseRedirect(reverse('add_postoffice'))
 
         else:
-            errors = {}
+            errors_dict = {}
             for field in form.errors:
-                # field - string
+                # field -> string
                 for f in form:
                     if field == f.name:
-                        errors[f.label] = form.errors[field].as_text()
+                        errors_dict[f.label] = form.errors[field].as_text()
 
-            messages.error(request, errors)
+            errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
+            errors_str = "; ".join(errors_list)
+
+            messages.error(request, errors_str)
 
         return render(request, 'addpostoffice.html', context=context)

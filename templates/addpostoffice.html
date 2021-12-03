@@ -38,7 +38,6 @@
                         <div>
                             {% if messages %}
                                     {% for message in messages %}
-
                                         {% if message.tags == 'success' %}
                                             <div class="success mt-2 mb-2">
                                                 <i class="fa fa-success"></i>
@@ -47,17 +46,11 @@
                                         {% endif %}
 
                                         {% if message.tags == 'error' %}
-                                            {{ message }}
-                                            {% for key, val in message %}
-
-                                                <div class="error mt-2 mb-2">
-                                                    <i class="fa fa-warning"></i>
-                                                    {{ key }} {{ val }}
-                                                </div>
-                                            {% endfor %}
-
+                                            <div class="error mt-2 mb-2">
+                                                <i class="fa fa-warning"></i>
+                                                {{ message }}
+                                            </div>
                                         {% endif %}
-
                                     {% endfor %}
                             {% endif %}
 
