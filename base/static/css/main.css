@@ -76,6 +76,30 @@ body {
 }
 
 
+.form-switch {
+     font-size: 0.8rem;
+     color: #909090;
+}
+
+.form-switch .form-check-input {
+    border-color: #bababa;
+    box-shadow: none !important;
+    background-color: #fdfdfd;
+    transition:  .25s ease-in-out;
+}
+
+.form-switch .form-check-input:focus {
+    border-color: #bababa;
+    background-color: #fdfdfd;
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(186, 186, 186, 1)'/></svg>");
+}
+
+.form-switch .form-check-input:checked {
+    border-color: rgba(26, 188, 156, .8);
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(26, 188, 156, 0.8)'/></svg>");
+}
+
+
 .icon-inside {
       position: absolute;
       right: 12px;
@@ -107,7 +131,7 @@ a.nav-link:hover, a.nav-link:focus {
 
 
 .error {
-    color: rgba(220, 0, 5, .8)
+    color: rgba(220, 0, 5, .7)
 }
 
 .success {

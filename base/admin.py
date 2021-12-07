@@ -19,7 +19,8 @@ class ShowPostofficeAdmin(admin.ModelAdmin):
 
 
 class ShowCartridgAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'nomenclature']
+    list_display = ['pk', 'nomenclature', 'printer_model', 'is_drum']
+
 
 
 admin.site.register(User, ShowUserAdmin)

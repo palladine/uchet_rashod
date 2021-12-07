@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="row mt-5">
+            <div class="col"></div>
+            <div class="col-4 d-flex justify-content-center">
+                <div class="card text-center">
+                    <h4 class="card-header text-uppercase">Добавление номенклатуры картриджа</h4>
+
+                    <div class="card-body d-flex justify-content-center">
+                        <form action="{% url 'add_cartridge' %}" method="post" class="col-11" novalidate>
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                {{ form_single.nomenclature }}
+                                <p class="ht">{{ form_single.nomenclature.help_text }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_single.printer_model }}
+                                <p class="ht">{{ form_single.printer_model.help_text }}</p>
+                            </div>
+
+                            <div class="mb-3 form-switch">
+                                <div class="row">
+                                    <div class="col-9 text-uppercase d-flex justify-content-end">
+                                        {{ form_single.is_drum.label }}
+                                    </div>
+                                    <div class="col-3 d-flex justify-content-end">{{ form_single.is_drum }}</div>
+                                </div>
+                            </div>
+
+
+                            <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" name='single' type="submit">
+                                Добавить
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card-footer">
+                            {% if messages %}
+                                    {% for message in messages %}
+                                        {% if message.tags == 'success' %}
+                                            <div class="success mt-2 mb-2">
+                                                <i class="fa fa-check"></i>&nbsp;
+                                                {{ message }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if message.tags == 'error' %}
+                                            <div class="error mt-2 mb-2">
+                                                <i class="fa fa-exclamation"></i>&nbsp;
+                                                {{ message }}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                            {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TODO Center div -->
+            <div class="col-1"></div>
+
+            <div class="col-4 d-flex justify-content-center">
+                <div class="card text-center">
+                    <h4 class="card-header text-uppercase">Добавление номенклатур картриджей из файла</h4>
+
+                     <div class="card-body d-flex justify-content-center">
+                         <form action="{% url 'add_cartridge' %}" method="post" class="col-11" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form_multy.file }}
+                                <p class="ht">{{ form_multy.file.help_text }}</p>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" name='multy' type="submit">
+                                Добавить
+                            </button>
+                         </form>
+                     </div>
+                </div>
+            </div>
+
+
+            <div class="col"></div>
+
+        </div>
+    </div>
+{% endblock %}

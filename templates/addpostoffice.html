@@ -35,37 +35,29 @@
                     </div>
 
                     <div class="card-footer">
-                        <div>
                             {% if messages %}
                                     {% for message in messages %}
                                         {% if message.tags == 'success' %}
                                             <div class="success mt-2 mb-2">
-                                                <i class="fa fa-success"></i>
+                                                <i class="fa fa-check"></i>&nbsp;
                                                 {{ message }}
                                             </div>
                                         {% endif %}
 
                                         {% if message.tags == 'error' %}
                                             <div class="error mt-2 mb-2">
-                                                <i class="fa fa-warning"></i>
+                                                <i class="fa fa-exclamation"></i>&nbsp;
                                                 {{ message }}
                                             </div>
                                         {% endif %}
                                     {% endfor %}
                             {% endif %}
-
-
-
-
-
-
-
-                        </div>
-
                     </div>
+
                 </div>
             </div>
             <div class="col-4"></div>
 
-
+        </div>
+    </div>
 {% endblock %}

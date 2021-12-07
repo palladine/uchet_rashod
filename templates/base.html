@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
                         {% if user.role == '1' %}
                             <a class="nav-link text-uppercase" href="{% url 'add_postoffice' %}">Добавить почтамт</a>
                             <a class="nav-link text-uppercase" href="#">Добавить пользователя</a>
-                            <a class="nav-link text-uppercase" href="#">Добавить номенклатуру картриджа</a>
+                            <a class="nav-link text-uppercase" href="{% url 'add_cartridge' %}">Добавить номенклатуру картриджа</a>
                             <a class="nav-link text-uppercase" href="#">Отправить на почтамт</a>
                         {% endif %}
                     </nav>
