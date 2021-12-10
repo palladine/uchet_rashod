@@ -103,12 +103,12 @@ body {
 .icon-inside {
       position: absolute;
       right: 12px;
-      top: calc(50% - 13px);
+      top: calc(50% - 11px);
       pointer-events: none;
-      font-size: 16px;
-      font-size: 1.125rem;
+      font-size: 0.95rem;
       color: #909090;
       z-index:3;
+      margin: auto;
 }
 
 a {
@@ -171,3 +171,4 @@ nav.head {
     color: #909090;
     margin-bottom: -0.4rem;
 }
+
