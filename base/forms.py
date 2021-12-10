@@ -126,7 +126,7 @@ class AddCartridgesFileForm(forms.Form):
     '''
     file = WorkFile(label='Файл', max_length=100, help_text=ht, required=True,
                         widget=forms.FileInput(attrs={'class': 'form-control form-control-sm',
-                                                      'placeholder': 'ФАЙЛ',
+                                                      'placeholder': 'ВЫБЕРИТЕ ФАЙЛ ...',
                                                       'id': 'file',
                                                       'style': 'display: none;'}))
 

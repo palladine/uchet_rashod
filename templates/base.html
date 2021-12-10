@@ -65,6 +65,7 @@
 
                         {% if user.is_staff %}
                             <a class="nav-link text-uppercase" href="/../admin">Панель администратора</a>
+                            <hr>
                         {% endif %}
 
                         {% if user.role == '1' %}
@@ -72,7 +73,12 @@
                             <a class="nav-link text-uppercase" href="#">Добавить пользователя</a>
                             <a class="nav-link text-uppercase" href="{% url 'add_cartridge' %}">Добавить номенклатуру картриджа</a>
                             <a class="nav-link text-uppercase" href="#">Отправить на почтамт</a>
+                            <hr>
                         {% endif %}
+
+                            <a class="nav-link text-uppercase" href="#">Зарегистрированные номенклатуры картриджей (таблица)</a>
+                            <a class="nav-link text-uppercase" href="#">Картриджи на почтамте (таблица)</a>
+
                     </nav>
                 </div>
 
@@ -103,12 +109,9 @@
         });
 
 
-        document.getElementById('file').addEventListener('change', doVal);
-        function doVal() {
-            console.log('sdsdfsdfsdf');
+        document.getElementById('file').addEventListener('change', doValfile);
+        function doValfile() {
             var a = document.getElementById('file');
-            console.log(a);
-
             if(a.value == "")
             {
                 document.getElementById("textfile").value = "";
@@ -119,6 +122,22 @@
                 document.getElementById("textfile").value = theSplit[theSplit.length-1];
             }
         }
+
+        document.getElementById('textfile').addEventListener('change', doValtextfile);
+        function doValtextfile() {
+            var a = document.getElementById('textfile');
+            if(a.value == "")
+            {
+                document.getElementById("file").value = "";
+            }
+            else
+            {
+                var theSplit = a.value.split('\\');
+                document.getElementById("file").value = theSplit[theSplit.length-1];
+            }
+        }
+
+
     </script>
 
 
