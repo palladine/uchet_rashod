@@ -131,7 +131,8 @@ a.nav-link:hover, a.nav-link:focus {
 
 
 .error {
-    color: rgba(220, 0, 5, .7)
+    color: rgba(220, 0, 5, .7);
+    font-size: 0.9rem;
 }
 
 .success {

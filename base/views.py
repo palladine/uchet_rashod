@@ -1,3 +1,4 @@
+import numpy as np
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
@@ -5,7 +6,7 @@ from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridges
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge
 from django.contrib import messages
-
+import pandas
 
 class UserLogin(View):
     def get(self, request):
@@ -34,6 +35,18 @@ class UserLogin(View):
                 return render(request, 'login.html', context=context)
 
         else:
+            errors_dict = {}
+            for field in form.errors:
+                # field -> string
+                for f in form:
+                    if field == f.name:
+                        errors_dict[f.label] = form.errors[field].as_text()
+
+            errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
+            errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
+
+            messages.error(request, errors_str)
+
             context = {'form': form}
             return render(request, 'login.html', context=context)
 
@@ -97,7 +110,7 @@ class AddPostoffice(View):
                         errors_dict[f.label] = form.errors[field].as_text()
 
             errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
-            errors_str = "; ".join(errors_list)
+            errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
 
             messages.error(request, errors_str)
 
@@ -121,35 +134,73 @@ class AddCartridge(View):
 
         return render(request, 'addcartridge.html', context=context)
 
+
+    def get_errors_form(self, form):
+        errors_dict = {}
+        for field in form.errors:
+            # field -> string
+            for f in form:
+                if field == f.name:
+                    errors_dict[f.label] = form.errors[field].as_text()
+
+        errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
+        errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
+        return errors_str
+
+
     def post(self, request):
         context = {}
-        form = AddCartridgeForm(request.POST)
-        context.update({'title': 'Добавление номенклатуры картриджа', 'form': form })
 
-        if form.is_valid():
+        form_single = AddCartridgeForm(request.POST)
+        form_multy = AddCartridgesFileForm(request.POST, request.FILES)
+        context.update({'title': 'Добавление номенклатуры картриджа', 'form_single': form_single, 'form_multy': form_multy})
 
-            nomenclature = request.POST.get('nomenclature')
-            printer = request.POST.get('printer_model')
-            drum = True if request.POST.get('is_drum') else False
+        if 'single' in request.POST:
+            if form_single.is_valid():
+                nomenclature = request.POST.get('nomenclature').strip()
+                printer = request.POST.get('printer_model')
+                source = request.POST.get('source')
+                drum = True if request.POST.get('is_drum') else False
 
-            # save
-            cartridge = Cartridge(nomenclature=nomenclature, printer_model=printer, is_drum=drum)
-            cartridge.save()
-            messages.success(request, 'Номенклатура картриджа добавлена')
+                # save
+                cartridge = Cartridge(nomenclature=nomenclature, printer_model=printer, is_drum=drum, source=source)
+                cartridge.save()
+                messages.success(request, 'Номенклатура картриджа добавлена', extra_tags='single')
 
-            return HttpResponseRedirect(reverse('add_cartridge'))
+                return HttpResponseRedirect(reverse('add_cartridge'))
 
-        else:
-            errors_dict = {}
-            for field in form.errors:
-                # field -> string
-                for f in form:
-                    if field == f.name:
-                        errors_dict[f.label] = form.errors[field].as_text()
+            else:
+                messages.error(request, self.get_errors_form(form_single), extra_tags='single')
 
-            errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
-            errors_str = "; ".join(errors_list)
+        if 'multy' in request.POST:
+            if form_multy.is_valid():
+                file_object = form_multy.cleaned_data.get('file')
+                file_bytes = file_object.read()
 
-            messages.error(request, errors_str)
+                wb = pandas.read_excel(file_bytes)  #  wb -----> DataFrame
+
+                count_created = 0
+                for unit in wb.to_numpy():
+                    nomenclature = unit[0].strip()
+                    printer = unit[1]
+                    drum = True if str(unit[2]).strip() == 'Да' or unit[2] == 1 else False
+                    source = '' if str(unit[3]) == 'nan' else str(unit[3])
+
+
+                    # save
+                    obj, created = Cartridge.objects.filter(nomenclature=nomenclature).get_or_create(
+                        nomenclature=nomenclature,
+                        printer_model=printer,
+                        is_drum=drum,
+                        source=source)
+                    if created:
+                        count_created += 1
+
+
+                messages.success(request, f'Номенклатуры картриджей добавлены ({count_created} позиций)', extra_tags='multy')
+                return HttpResponseRedirect(reverse('add_cartridge'))
+            else:
+                messages.error(request, self.get_errors_form(form_multy), extra_tags='multy')
+
 
         return render(request, 'addcartridge.html', context=context)

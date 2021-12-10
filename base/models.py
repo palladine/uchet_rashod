@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser
     + 1. User (username, password, email, last_name, first_name, , middle_name, postoffice_id, 
                     is_staff, is_active, date_joined, last_login, role)
     + 2. Postoffice (name, index, address)
-    + 3. Cartridge (nomenclature, printer_model, is_drum)
+    + 3. Cartridge (nomenclature, printer_model, is_drum, source)
     
     4. Operation (id, cartridge_id, postoffice_id, amount_up, amount_down, date_operation(db_index=True))
     5. State (id, cartridge_id, postoffice_id, amount)
@@ -70,6 +70,7 @@ class Cartridge(BaseModel):
     nomenclature = models.CharField(max_length=75, unique=True, null=False, blank=False, verbose_name="Номенклатура картриджа")
     printer_model = models.CharField(max_length=100, null=False, blank=False, default='', verbose_name="Модель принтера")
     is_drum = models.BooleanField(default=False, verbose_name="Драм")
+    source = models.CharField(max_length=255, null=False, blank=True, default='', verbose_name='Ресурс картриджа')
 
     class Meta:
         verbose_name = "Картридж"
