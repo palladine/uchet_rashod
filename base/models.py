@@ -7,8 +7,10 @@ from django.contrib.auth.models import AbstractUser
                     is_staff, is_active, date_joined, last_login, role)
     + 2. Postoffice (name, index, address)
     + 3. Cartridge (nomenclature, printer_model, is_drum, source)
+    + 4. Supply (postoffice_recipient, user_sender, user_recipient, data_text, 
+                date_sending(db_index=True), date_receiving(db_index=True), status_sending, status_receiving)
     
-    4. Operation (id, cartridge_id, postoffice_id, amount_up, amount_down, date_operation(db_index=True))
+   
     5. State (id, cartridge_id, postoffice_id, amount)
 
     !! Добавление первого пользователя суперадмина:
@@ -78,3 +80,22 @@ class Cartridge(BaseModel):
 
     def __str__(self):
         return "Картридж {}".format(self.nomenclature)
+
+
+
+class Supply(BaseModel):
+    postoffice_recipient = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
+    user_id_sender = models.CharField(max_length=50, null=False, blank=False, verbose_name="Отправитель")
+    user_recipient = models.CharField(max_length=50, null=False, blank=False, verbose_name="Получатель")
+    data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
+    date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)
+    date_receiving = models.DateTimeField(null=True, blank=False, verbose_name="Дата приемки", db_index=True)
+    status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
+    status_receiving = models.BooleanField(default=False, verbose_name="Статус приемки")
+
+    class Meta:
+        verbose_name = "Поставка в почтамт"
+        verbose_name_plural = "Поставки в почтамты"
+
+    def __str__(self):
+        return "Поставка номер {}".format(self.pk)

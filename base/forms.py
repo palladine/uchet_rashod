@@ -30,7 +30,7 @@ class PasswordField(CharField):
 class LoginForm(forms.Form):
     login = LoginField(label='Имя пользователя',
                             max_length=100,
-                            widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ЛОГИН'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ЛОГИН', 'autocomplete': 'off'}))
     password = PasswordField(label='Пароль',
                                widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПАРОЛЬ'}))
 
