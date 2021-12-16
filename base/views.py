@@ -1,12 +1,14 @@
 import numpy as np
+from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
-from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm
+from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge
+from .models import User, Postoffice, Cartridge, Supply
 from django.contrib import messages
 import pandas
+import json
 
 class UserLogin(View):
     def get(self, request):
@@ -204,3 +206,61 @@ class AddCartridge(View):
 
 
         return render(request, 'addcartridge.html', context=context)
+
+
+
+
+
+class AddSupply(View):
+
+    def get(self, request):
+        context = {}
+        user = request.user
+
+        form_supply = AddSupplyForm()
+        form_part = AddPartForm()
+
+
+
+        context.update({'user': user,
+                        'title': 'Создать поставку картриджей на почтамт',
+                        'form_part': form_part,
+                        'form_supply': form_supply})
+
+        ses = request.session.get('id_supply', False)
+        if ses:
+            ...
+
+        return render(request, 'addsupply.html', context=context)
+
+
+
+    def post(self, request):
+
+        form_supply = AddSupplyForm(request.POST)
+        form_part = AddPartForm(request.POST)
+
+
+        if 'but_supply' in request.POST:
+            if form_supply.is_valid():
+                postoffice = request.POST.get('postoffice_name')
+
+                # save
+                supply = Supply(postoffice_recipient=postoffice)
+                supply.save()
+
+                messages.success(request,
+                                 '{} создана. Необходимо добавить позиции в поставку.'.format(supply),
+                                 extra_tags='supply')
+
+            return HttpResponseRedirect(reverse('add_supply'))
+
+        if 'but_part' in request.POST:
+            if form_part.is_valid():
+                supply = request.POST.get('supply')
+                print(supply)
+                # TODO save Part, session ?, output table parts, save Supply !
+
+
+            return HttpResponseRedirect(reverse('add_supply'))
+

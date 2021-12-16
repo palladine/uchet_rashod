@@ -3,7 +3,7 @@ import os.path
 from django import forms
 from django.forms import CharField, FileField
 from django.core.exceptions import ValidationError
-from .models import User, Cartridge, Postoffice
+from .models import User, Cartridge, Postoffice, Supply
 
 
 ht = '* Поле обязательное для заполнения'
@@ -131,3 +131,33 @@ class AddCartridgesFileForm(forms.Form):
                                                       'style': 'display: none;'}))
 
 
+
+class AddSupplyForm(forms.Form):
+    postoffice_name = forms.ModelChoiceField(label='Почтамт',
+                                             queryset=Postoffice.objects.all(),
+                                             help_text=ht, required=True,
+                                             to_field_name='postoffice_name',
+                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+
+
+
+class AddPartForm(forms.Form):
+    supply = forms.ModelChoiceField(label='Поставка',
+                                                    queryset=Supply.objects.filter(status_sending = False),
+                                                    help_text=ht, required=True,
+                                                    to_field_name='pk',
+                                                    empty_label='ВЫБЕРИТЕ ПОСТАВКУ ...',
+                                                    widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+
+
+    nomenclature_cartridge = forms.ModelChoiceField(label='Номенклатура картриджа',
+                                                    queryset=Cartridge.objects.all(),
+                                                    help_text=ht, required=True,
+                                                    to_field_name='nomenclature',
+                                                    empty_label='ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
+                                                    widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+
+    amount = forms.CharField(label='Количество', help_text=ht, required=True,
+                                widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm',
+                                                                'placeholder': 'КОЛИЧЕСТВО'}))

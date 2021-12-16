@@ -79,7 +79,7 @@ class Cartridge(BaseModel):
         verbose_name_plural = "Картриджи"
 
     def __str__(self):
-        return "Картридж {}".format(self.nomenclature)
+        return "{}".format(self.nomenclature)
 
 
 
@@ -98,4 +98,18 @@ class Supply(BaseModel):
         verbose_name_plural = "Поставки в почтамты"
 
     def __str__(self):
-        return "Поставка номер {}".format(self.pk)
+        return "Поставка №{0} (на {1})".format(self.pk, self.postoffice_recipient)
+
+
+class Part(BaseModel):
+    id_supply = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="ID Поставки")
+    postoffice = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
+    nomenclature = models.CharField(max_length=75, null=False, blank=False, verbose_name="Номенклатура картриджа")
+    amount = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Позиция в поставке"
+        verbose_name_plural = "Позиции в поставках"
+
+    def __str__(self):
+        return "Позиция №{}".format(self.pk)
