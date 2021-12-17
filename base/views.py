@@ -5,7 +5,7 @@ from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirec
 from django.urls import reverse
 from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply
+from .models import User, Postoffice, Cartridge, Supply, Part
 from django.contrib import messages
 import pandas
 import json
@@ -220,6 +220,8 @@ class AddSupply(View):
         form_supply = AddSupplyForm()
         form_part = AddPartForm()
 
+        supplies = Supply.objects.filter(status_sending=False)
+        ids = [i.pk for i in supplies]
 
 
         context.update({'user': user,
@@ -227,9 +229,7 @@ class AddSupply(View):
                         'form_part': form_part,
                         'form_supply': form_supply})
 
-        ses = request.session.get('id_supply', False)
-        if ses:
-            ...
+
 
         return render(request, 'addsupply.html', context=context)
 
@@ -257,10 +257,21 @@ class AddSupply(View):
 
         if 'but_part' in request.POST:
             if form_part.is_valid():
-                supply = request.POST.get('supply')
-                print(supply)
-                # TODO save Part, session ?, output table parts, save Supply !
+                id_supply = request.POST.get('supply')
+                supply = Supply.objects.get(pk=id_supply)
 
+
+                # TODO session, output table parts, save Supply !
+                nomenclature = request.POST.get('nomenclature_cartridge')
+                amount = request.POST.get('amount')
+
+                # save Part
+                part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, nomenclature=nomenclature, amount=amount)
+                part.save()
+
+                messages.success(request,
+                                 'Позиция в поставку ({}) добавлена.'.format(supply),
+                                 extra_tags='part')
 
             return HttpResponseRedirect(reverse('add_supply'))
 

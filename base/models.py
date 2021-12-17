@@ -9,7 +9,7 @@ from django.contrib.auth.models import AbstractUser
     + 3. Cartridge (nomenclature, printer_model, is_drum, source)
     + 4. Supply (postoffice_recipient, user_sender, user_recipient, data_text, 
                 date_sending(db_index=True), date_receiving(db_index=True), status_sending, status_receiving)
-    
+    + Part (id_supply, postoffice, nomenclature, amount)
    
     5. State (id, cartridge_id, postoffice_id, amount)
 
