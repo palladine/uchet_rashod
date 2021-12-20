@@ -77,6 +77,10 @@
                             <hr>
                         {% endif %}
 
+                        {% if user.role == '2' %}
+                            <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Принять картриджи на почтамт</a>
+                        {% endif%}
+
                             <a class="nav-link text-uppercase" href="#">Зарегистрированные номенклатуры картриджей (таблица)</a>
                             <a class="nav-link text-uppercase" href="#">Картриджи на почтамте (таблица)</a>
 

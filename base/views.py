@@ -320,3 +320,22 @@ class AddSupply(View):
         return render(request, 'addsupply.html', context=context)
 
 
+
+class ApplySupply(View):
+
+    def get(self, request):
+        context = {}
+
+        postoffice = request.user.postoffice_id
+        supplies = Supply.objects.filter(postoffice_recipient=postoffice, status_sending=True, status_receiving=False)
+        ids = [i.pk for i in supplies]
+        all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
+
+        context.update({'supplies': all_sup_wparts})
+
+        return render(request, 'applysupply.html', context=context)
+
+
+    def post(self, request):
+        # TODO: change supply, change state (new model)!
+        ...

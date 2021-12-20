@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+        <div class="container-fluid">
+            <div class="row mt-5">
+                <div class="col"></div>
+
+                <div class="col-7">
+
+                    {% if supplies %}
+                        {% for sup in supplies%}
+                            <table class='table table-sm table-hover table-bordered align-middle mb-5'>
+                                <thead>
+                                    <tr>
+                                        <th scope="row" colspan="3">{{ sup.0 }}</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for p in sup.1 %}
+                                        <tr>
+                                            <td class="td_postoffice">{{ p.postoffice }}</td>
+                                            <td>{{ p.nomenclature }}</td>
+                                            <td class="td_amount">{{ p.amount }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2"></td>
+                                        <td>
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase" type="submit" name="butapply_{{ sup.0.pk }}">
+                                                    Принять
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="col"></div>
+{% endblock %}

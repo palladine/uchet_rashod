@@ -218,7 +218,7 @@ th, td {
 }
 
 .td_amount {
-    width: 70px;
+    width: 100px;
     text-align: center;
 }
 
@@ -227,6 +227,6 @@ th, td {
 }
 
 .btn-xs {
-    padding: 3px 3px;
-    font-size: 0.75rem;
+    padding: 2px 2px;
+    font-size: 0.8rem;
 }
