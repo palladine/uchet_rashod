@@ -85,7 +85,7 @@ class Cartridge(BaseModel):
 
 class Supply(BaseModel):
     postoffice_recipient = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
-    user_id_sender = models.CharField(max_length=50, null=False, blank=False, verbose_name="Отправитель")
+    user_sender = models.CharField(max_length=50, null=False, blank=False, verbose_name="Отправитель")
     user_recipient = models.CharField(max_length=50, null=False, blank=False, verbose_name="Получатель")
     data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)

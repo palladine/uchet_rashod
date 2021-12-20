@@ -1,7 +1,6 @@
 import os.path
-
 from django import forms
-from django.forms import CharField, FileField
+from django.forms import CharField, FileField, ModelChoiceField
 from django.core.exceptions import ValidationError
 from .models import User, Cartridge, Postoffice, Supply
 
@@ -51,11 +50,12 @@ class PostofficeNameField(CharField):
 class IndexField(CharField):
     # Validation
     def clean(self, value):
-        if not all(l.isdigit() for l in value):
-            raise ValidationError(('Поле "ИНДЕКС" должно состоять из цифр'), code='isdigit')
+        if value:
+            if not all(l.isdigit() for l in value):
+                raise ValidationError(('Поле "ИНДЕКС" должно состоять из цифр'), code='isdigit')
 
-        if len(value) != 6:
-            raise ValidationError(('Поле "ИНДЕКС" неправильной длины'), code='length')
+            if len(value) != 6:
+                raise ValidationError(('Поле "ИНДЕКС" неправильной длины'), code='length')
 
 
 class AddPostofficeForm(forms.Form):
@@ -119,6 +119,7 @@ class WorkFile(FileField):
 
         return data   # !!!
 
+
 class AddCartridgesFileForm(forms.Form):
     '''
         <form enctype="multipart/form-data" method="post"> ...            in template.html
@@ -131,9 +132,16 @@ class AddCartridgesFileForm(forms.Form):
                                                       'style': 'display: none;'}))
 
 
+class PostofficeReceiverField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ПОЧТАМТ" обязательное для заполнения'), code='empty')
+
+
 
 class AddSupplyForm(forms.Form):
-    postoffice_name = forms.ModelChoiceField(label='Почтамт',
+    postoffice_name = PostofficeReceiverField(label='Почтамт',
                                              queryset=Postoffice.objects.all(),
                                              help_text=ht, required=True,
                                              to_field_name='postoffice_name',
@@ -142,8 +150,29 @@ class AddSupplyForm(forms.Form):
 
 
 
+class SupplyField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ПОСТАВКА" обязательное для заполнения'), code='empty')
+
+
+class NomenclaturePartField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "НОМЕНКЛАТУРА" обязательное для заполнения'), code='empty')
+
+
+class AmountField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "КОЛИЧЕСТВО" обязательное для заполнения'), code='empty')
+
+
 class AddPartForm(forms.Form):
-    supply = forms.ModelChoiceField(label='Поставка',
+    supply = SupplyField(label='Поставка',
                                                     queryset=Supply.objects.filter(status_sending = False),
                                                     help_text=ht, required=True,
                                                     to_field_name='pk',
@@ -151,13 +180,13 @@ class AddPartForm(forms.Form):
                                                     widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
 
 
-    nomenclature_cartridge = forms.ModelChoiceField(label='Номенклатура картриджа',
+    nomenclature_cartridge = NomenclaturePartField(label='Номенклатура картриджа',
                                                     queryset=Cartridge.objects.all(),
                                                     help_text=ht, required=True,
                                                     to_field_name='nomenclature',
                                                     empty_label='ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
                                                     widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
 
-    amount = forms.CharField(label='Количество', help_text=ht, required=True,
-                                widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm',
+    amount = AmountField(label='Количество', help_text=ht, required=True,
+                        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm',
                                                                 'placeholder': 'КОЛИЧЕСТВО'}))

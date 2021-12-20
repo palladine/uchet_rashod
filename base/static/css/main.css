@@ -147,22 +147,27 @@ a.nav-link:hover, a.nav-link:focus {
 .error {
     color: rgba(220, 0, 5, .7);
     font-size: 0.9rem;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .success {
     color: rgba(26, 188, 156, .8);
+    font-size: 0.9rem;
+    text-align: center;
+    vertical-align: middle;
 }
 
 nav.head {
     min-width: 1250px;
     font-size: 0.9rem;
-    border-bottom: 1px solid #909090;
+    border-bottom: 1px solid rgba(144, 144, 144, 0.5);
 }
 
 .menu {
     min-width: 190px;
     max-width: 190px;
-    border-right: 1px solid #909090;
+    border-right: 1px solid rgba(144, 144, 144, 0.5);
     padding: 0px;
 }
 
@@ -192,3 +197,36 @@ hr {
     margin-left: 3px;
 }
 
+.table {
+    font-size: 0.8rem;
+    border: 1px solid rgba(144, 144, 144, 0.5);
+}
+
+thead {
+    background-color: #e2e2e2;
+}
+
+th, td {
+    vertical-align: middle;
+}
+
+
+
+.td_but {
+    width: 45px;
+    text-align: center;
+}
+
+.td_amount {
+    width: 70px;
+    text-align: center;
+}
+
+.td_postoffice {
+    width: 200px;
+}
+
+.btn-xs {
+    padding: 3px 3px;
+    font-size: 0.75rem;
+}

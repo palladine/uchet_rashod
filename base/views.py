@@ -9,6 +9,22 @@ from .models import User, Postoffice, Cartridge, Supply, Part
 from django.contrib import messages
 import pandas
 import json
+from datetime import datetime
+
+
+def get_errors_form(form):
+    errors_dict = {}
+    for field in form.errors:
+        # field -> string
+        for f in form:
+            if field == f.name:
+                errors_dict[f.label] = form.errors[field].as_text()
+
+    errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
+    errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
+    return errors_str
+
+
 
 class UserLogin(View):
     def get(self, request):
@@ -37,17 +53,7 @@ class UserLogin(View):
                 return render(request, 'login.html', context=context)
 
         else:
-            errors_dict = {}
-            for field in form.errors:
-                # field -> string
-                for f in form:
-                    if field == f.name:
-                        errors_dict[f.label] = form.errors[field].as_text()
-
-            errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
-            errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
-
-            messages.error(request, errors_str)
+            messages.error(request, get_errors_form(form))
 
             context = {'form': form}
             return render(request, 'login.html', context=context)
@@ -104,17 +110,7 @@ class AddPostoffice(View):
             return HttpResponseRedirect(reverse('add_postoffice'))
 
         else:
-            errors_dict = {}
-            for field in form.errors:
-                # field -> string
-                for f in form:
-                    if field == f.name:
-                        errors_dict[f.label] = form.errors[field].as_text()
-
-            errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
-            errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
-
-            messages.error(request, errors_str)
+            messages.error(request, get_errors_form(form))
 
         return render(request, 'addpostoffice.html', context=context)
 
@@ -135,19 +131,6 @@ class AddCartridge(View):
                         'form_multy': form_multy})
 
         return render(request, 'addcartridge.html', context=context)
-
-
-    def get_errors_form(self, form):
-        errors_dict = {}
-        for field in form.errors:
-            # field -> string
-            for f in form:
-                if field == f.name:
-                    errors_dict[f.label] = form.errors[field].as_text()
-
-        errors_list = ['{}'.format(v) for k, v in errors_dict.items()]
-        errors_str = "; ".join(errors_list).replace('*', '').replace('.', '')
-        return errors_str
 
 
     def post(self, request):
@@ -172,7 +155,7 @@ class AddCartridge(View):
                 return HttpResponseRedirect(reverse('add_cartridge'))
 
             else:
-                messages.error(request, self.get_errors_form(form_single), extra_tags='single')
+                messages.error(request, get_errors_form(form_single), extra_tags='single')
 
         if 'multy' in request.POST:
             if form_multy.is_valid():
@@ -202,7 +185,7 @@ class AddCartridge(View):
                 messages.success(request, f'Номенклатуры картриджей добавлены ({count_created} позиций)', extra_tags='multy')
                 return HttpResponseRedirect(reverse('add_cartridge'))
             else:
-                messages.error(request, self.get_errors_form(form_multy), extra_tags='multy')
+                messages.error(request, get_errors_form(form_multy), extra_tags='multy')
 
 
         return render(request, 'addcartridge.html', context=context)
@@ -221,25 +204,31 @@ class AddSupply(View):
         form_part = AddPartForm()
 
         supplies = Supply.objects.filter(status_sending=False)
-        ids = [i.pk for i in supplies]
-
+        active_supplies = [k for k in supplies if Part.objects.filter(id_supply=k.pk).count()>0]
+        ids = [i.pk for i in active_supplies]
+        all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
 
         context.update({'user': user,
                         'title': 'Создать поставку картриджей на почтамт',
                         'form_part': form_part,
-                        'form_supply': form_supply})
-
-
+                        'form_supply': form_supply,
+                        'supplies': all_sup_wparts})
 
         return render(request, 'addsupply.html', context=context)
 
 
 
     def post(self, request):
-
+        context = {}
         form_supply = AddSupplyForm(request.POST)
         form_part = AddPartForm(request.POST)
+        user = request.user
 
+        context.update(
+            {'title': 'Создать поставку картриджей на почтамт',
+             'form_supply': form_supply,
+             'form_part': form_part,
+             'user': user})
 
         if 'but_supply' in request.POST:
             if form_supply.is_valid():
@@ -252,16 +241,16 @@ class AddSupply(View):
                 messages.success(request,
                                  '{} создана. Необходимо добавить позиции в поставку.'.format(supply),
                                  extra_tags='supply')
+                return HttpResponseRedirect(reverse('add_supply'))
+            else:
+                messages.error(request, get_errors_form(form_supply), extra_tags='supply')
 
-            return HttpResponseRedirect(reverse('add_supply'))
 
         if 'but_part' in request.POST:
             if form_part.is_valid():
                 id_supply = request.POST.get('supply')
                 supply = Supply.objects.get(pk=id_supply)
 
-
-                # TODO session, output table parts, save Supply !
                 nomenclature = request.POST.get('nomenclature_cartridge')
                 amount = request.POST.get('amount')
 
@@ -272,6 +261,62 @@ class AddSupply(View):
                 messages.success(request,
                                  'Позиция в поставку ({}) добавлена.'.format(supply),
                                  extra_tags='part')
+                return HttpResponseRedirect(reverse('add_supply'))
+            else:
+                messages.error(request, get_errors_form(form_part), extra_tags='part')
 
+
+        id_sup_send = False
+        for var in request.POST:
+            if var.startswith('butsend'):
+                id_sup_send = var.split('_')[1]
+
+        if id_sup_send:
+            user = request.user
+            user_sender = '{0} ({1} {2})'.format(user.username, user.last_name, user.first_name)
+
+            parts_send = Part.objects.filter(id_supply=id_sup_send)
+            data_text = ''
+            for p in parts_send:
+                str_act = '{0}:{1};'.format(p.nomenclature, p.amount)
+                data_text += str_act
+
+            date_sending = datetime.now()
+            status_sending = True
+
+            Supply.objects.filter(pk=id_sup_send).update(user_sender=user_sender,
+                                                        data_text=data_text,
+                                                        date_sending=date_sending,
+                                                        status_sending=status_sending)
             return HttpResponseRedirect(reverse('add_supply'))
+
+
+        id_part_del = False
+        for var in request.POST:
+            if var.startswith('butpartdel'):
+                id_part_del = var.split('_')[1]
+
+        if id_part_del:
+            Part.objects.filter(pk=id_part_del).delete()
+            return HttpResponseRedirect(reverse('add_supply'))
+
+        id_sup_del = False
+        for var in request.POST:
+            if var.startswith('butsupdel'):
+                id_sup_del = var.split('_')[1]
+
+        if id_sup_del:
+            Part.objects.filter(id_supply=id_sup_del).delete()
+            Supply.objects.get(pk=id_sup_del).delete()
+            return HttpResponseRedirect(reverse('add_supply'))
+
+        supplies = Supply.objects.filter(status_sending=False)
+        active_supplies = [k for k in supplies if Part.objects.filter(id_supply=k.pk).count() > 0]
+        ids = [i.pk for i in active_supplies]
+        all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
+
+        context.update({'supplies': all_sup_wparts})
+
+        return render(request, 'addsupply.html', context=context)
+
 
