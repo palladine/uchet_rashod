@@ -255,7 +255,7 @@ class AddSupply(View):
                 amount = request.POST.get('amount')
 
                 # save Part
-                part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, nomenclature=nomenclature, amount=amount)
+                part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature, amount=amount)
                 part.save()
 
                 messages.success(request,
@@ -278,7 +278,7 @@ class AddSupply(View):
             parts_send = Part.objects.filter(id_supply=id_sup_send)
             data_text = ''
             for p in parts_send:
-                str_act = '{0}:{1};'.format(p.nomenclature, p.amount)
+                str_act = '{0}:{1};'.format(p.cartridge, p.amount)
                 data_text += str_act
 
             date_sending = datetime.now()
@@ -337,5 +337,27 @@ class ApplySupply(View):
 
 
     def post(self, request):
-        # TODO: change supply, change state (new model)!
-        ...
+        context = {}
+
+        id_but_apply = False
+        for var in request.POST:
+            if var.startswith('butapply'):
+                id_but_apply = var.split('_')[1]
+
+        if id_but_apply:
+            supply = Supply.objects.get(pk=id_but_apply)
+            user = request.user
+            supply.user_recipient = '{0} ({1} {2})'.format(user.username, user.last_name, user.first_name)
+            supply.date_receiving = datetime.now()
+            supply.status_receiving = True
+            supply.save()
+
+            return HttpResponseRedirect(reverse('apply_supply'))
+
+        postoffice = request.user.postoffice_id
+        supplies = Supply.objects.filter(postoffice_recipient=postoffice, status_sending=True, status_receiving=False)
+        ids = [i.pk for i in supplies]
+        all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
+        context.update({'supplies': all_sup_wparts})
+
+        return render(request, 'applysupply.html', context=context)

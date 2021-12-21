@@ -9,9 +9,9 @@ from django.contrib.auth.models import AbstractUser
     + 3. Cartridge (nomenclature, printer_model, is_drum, source)
     + 4. Supply (postoffice_recipient, user_sender, user_recipient, data_text, 
                 date_sending(db_index=True), date_receiving(db_index=True), status_sending, status_receiving)
-    + Part (id_supply, postoffice, nomenclature, amount)
+    + 5. Part (id_supply, postoffice, nomenclature, amount)
+    + 6. State (postoffice, cartridge, total_amount)
    
-    5. State (id, cartridge_id, postoffice_id, amount)
 
     !! Добавление первого пользователя суперадмина:
     1. null=True (last_name, first_name, postoffice_id)
@@ -36,7 +36,7 @@ class User(AbstractUser, BaseModel):
     last_name = models.CharField(max_length=50, null=True, blank=False, verbose_name="Фамилия")
     first_name = models.CharField(max_length=50, null=True, blank=False, verbose_name="Имя")
     middle_name = models.CharField(max_length=50, null=True, blank=True, verbose_name="Отчество")
-    postoffice_id = models.ForeignKey("Postoffice", null=True, blank=False, on_delete=models.CASCADE, verbose_name="Почтамт")
+    postoffice_id = models.ForeignKey("Postoffice", null=True, blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
     date_joined = models.DateTimeField(auto_now_add=True, null=False, blank=False, verbose_name="Дата регистрации")
     last_login = models.DateTimeField(null=True, blank=False, verbose_name="Дата последнего входа")
 
@@ -84,7 +84,7 @@ class Cartridge(BaseModel):
 
 
 class Supply(BaseModel):
-    postoffice_recipient = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
+    postoffice_recipient = models.CharField(max_length=75, default='', null=False, blank=False, verbose_name="Почтамт получатель")
     user_sender = models.CharField(max_length=50, null=False, blank=False, verbose_name="Отправитель")
     user_recipient = models.CharField(max_length=50, null=False, blank=False, verbose_name="Получатель")
     data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
@@ -104,7 +104,7 @@ class Supply(BaseModel):
 class Part(BaseModel):
     id_supply = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="ID Поставки")
     postoffice = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
-    nomenclature = models.CharField(max_length=75, null=False, blank=False, verbose_name="Номенклатура картриджа")
+    cartridge = models.CharField(max_length=75, null=False, blank=False, verbose_name="Картридж")
     amount = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="Количество")
 
     class Meta:
@@ -113,3 +113,15 @@ class Part(BaseModel):
 
     def __str__(self):
         return "Позиция №{}".format(self.pk)
+
+
+class State(BaseModel):
+    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Почтамт')
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Картридж')
+    total_amount = models.IntegerField(default=-1, null=False, blank=False, verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Учет картриджей"
+
+    def __str__(self):
+        return "Учет картриджей"
