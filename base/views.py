@@ -3,9 +3,9 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
-from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm
+from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm, ShowCartridgesForm
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part
+from .models import User, Postoffice, Cartridge, Supply, Part, State
 from django.contrib import messages
 import pandas
 import json
@@ -234,7 +234,7 @@ class AddSupply(View):
             if form_supply.is_valid():
                 postoffice = request.POST.get('postoffice_name')
 
-                # save
+                # save supply
                 supply = Supply(postoffice_recipient=postoffice)
                 supply.save()
 
@@ -350,7 +350,22 @@ class ApplySupply(View):
             supply.user_recipient = '{0} ({1} {2})'.format(user.username, user.last_name, user.first_name)
             supply.date_receiving = datetime.now()
             supply.status_receiving = True
-            supply.save()
+
+
+            # change State
+            postoffice_apply = Postoffice.objects.get(postoffice_name=supply.postoffice_recipient)
+
+            active_parts = Part.objects.filter(id_supply=supply.pk)
+            for part in active_parts:
+                    cartridge_apply = Cartridge.objects.get(nomenclature=part.cartridge)
+                    state, state_created = State.objects.get_or_create(cartridge_id=cartridge_apply.pk, postoffice_id=postoffice_apply.pk)
+                    if state_created:
+                        state.total_amount = part.amount
+                    else:
+                        state.total_amount += part.amount
+                    state.save()
+
+            supply.save()  # !!!! after all actions
 
             return HttpResponseRedirect(reverse('apply_supply'))
 
@@ -361,3 +376,77 @@ class ApplySupply(View):
         context.update({'supplies': all_sup_wparts})
 
         return render(request, 'applysupply.html', context=context)
+
+
+
+class ShowCartridges(View):
+
+    def get(self, request):
+        context = {'title': 'Картриджи на почтамте'}
+
+        user = request.user
+
+        states = request.session.get('states', False)
+        postoffice = request.session.get('postoffice', False)
+
+        if postoffice:
+            request.session['postoffice'] = False
+
+        if isinstance(states, list):
+            request.session['states'] = False
+        else:
+            ### по аналогии с post !
+            postoffice = user.postoffice_id
+            postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
+            query = State.objects.filter(postoffice_id=postoffice_id)
+            states = []
+            for q in query:
+                states.append([q.cartridge.nomenclature, q.total_amount])
+
+        if user.role == '1':
+            form = ShowCartridgesForm()
+            context.update({'form': form})
+
+        context.update({'states': states, 'postoffice': postoffice})
+
+        return render(request, 'showcartridges.html', context=context)
+
+
+
+    def post(self, request):
+        context = {}
+        form = ShowCartridgesForm(request.POST)
+        context.update({'title': 'Картриджи на почтамте', 'form': form})
+
+        if form.is_valid():
+            postoffice_name = request.POST.get('postoffice_name')
+            postoffice_id = Postoffice.objects.get(postoffice_name=postoffice_name).pk
+
+            # !!!!!!!
+            query = State.objects.filter(postoffice_id=postoffice_id)
+
+            states = []
+            for q in query:
+                states.append([q.cartridge.nomenclature, q.total_amount])
+
+            request.session['states'] = states
+            request.session['postoffice'] = postoffice_name
+
+            return HttpResponseRedirect(reverse('show_cartridges'))
+
+        else:
+            messages.error(request, get_errors_form(form))
+
+
+        postoffice = request.user.postoffice_id
+        postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
+
+        query = State.objects.filter(postoffice_id=postoffice_id)
+        states = []
+        for q in query:
+            states.append([q.cartridge.nomenclature, q.total_amount])
+
+        context.update({'states': states, 'postoffice': postoffice, 'form': form})
+        return render(request, 'showcartridges.html', context=context)
+
+

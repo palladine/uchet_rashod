@@ -105,7 +105,7 @@ class Part(BaseModel):
     id_supply = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="ID Поставки")
     postoffice = models.CharField(max_length=75, null=False, blank=False, verbose_name="Почтамт получатель")
     cartridge = models.CharField(max_length=75, null=False, blank=False, verbose_name="Картридж")
-    amount = models.SmallIntegerField(default=-1, null=False, blank=False, verbose_name="Количество")
+    amount = models.SmallIntegerField(default=0, null=False, blank=False, verbose_name="Количество")
 
     class Meta:
         verbose_name = "Позиция в поставке"
@@ -118,10 +118,11 @@ class Part(BaseModel):
 class State(BaseModel):
     postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Почтамт')
     cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Картридж')
-    total_amount = models.IntegerField(default=-1, null=False, blank=False, verbose_name="Количество")
+    total_amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
 
     class Meta:
         verbose_name = "Учет картриджей"
+        verbose_name_plural = "Учет картриджей"
 
     def __str__(self):
         return "Учет картриджей"

@@ -190,3 +190,21 @@ class AddPartForm(forms.Form):
     amount = AmountField(label='Количество', help_text=ht, required=True,
                         widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm',
                                                                 'placeholder': 'КОЛИЧЕСТВО'}))
+
+
+
+class ShowPostofficeField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ПОЧТАМТ" обязательное для заполнения'), code='empty')
+
+
+
+class ShowCartridgesForm(forms.Form):
+    postoffice_name = ShowPostofficeField(label='Почтамт',
+                                             queryset=Postoffice.objects.all(),
+                                             help_text=ht, required=True,
+                                             to_field_name='postoffice_name',
+                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
