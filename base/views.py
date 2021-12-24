@@ -9,8 +9,10 @@ from .models import User, Postoffice, Cartridge, Supply, Part, State
 from django.contrib import messages
 import pandas
 import json
+import os
 from datetime import datetime
-
+import mimetypes
+from acc_materials.settings import BASE_DIR
 
 def get_errors_form(form):
     errors_dict = {}
@@ -73,9 +75,31 @@ class Main(View):
             user = request.user
             context = {'user': user,
                        'title': 'Главная'}
+
+            if user.role == '2':
+                postoffice = user.postoffice_id.postoffice_name
+                request.session['num_active_supplies'] = Supply.objects.filter(
+                    postoffice_recipient=postoffice,
+                    status_sending=True,
+                    status_receiving=False).count()
+                context.update({'num_active_supplies': request.session['num_active_supplies']})
+
             return render(request, 'main.html', context=context)
         else:
             return HttpResponseRedirect(reverse('login'))
+
+
+
+class ShowUsers(View):
+    def get(self, request):
+        context = {'title': 'Зарегистрированные пользователи'}
+
+        user = request.user
+        if user.role == '1':
+            all_users = User.objects.all()
+            context.update({'users': all_users})
+
+        return render(request, 'showusers.html', context=context)
 
 
 
@@ -187,6 +211,20 @@ class AddCartridge(View):
             else:
                 messages.error(request, get_errors_form(form_multy), extra_tags='multy')
 
+
+        if 'download' in request.POST:
+            try:
+                path = os.path.join(BASE_DIR, 'base/static/misc/')
+                filename = 'template.xlsx'
+                file = open(path+filename, 'rb')
+                mime_type, _ = mimetypes.guess_type(path+filename)
+                response = HttpResponse(file, content_type=mime_type)
+                response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+
+                messages.success(request, '', extra_tags='download')
+                return response
+            except Exception as e:
+                messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download')
 
         return render(request, 'addcartridge.html', context=context)
 
@@ -332,6 +370,7 @@ class ApplySupply(View):
         all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
 
         context.update({'supplies': all_sup_wparts})
+        context.update({'num_active_supplies': request.session['num_active_supplies']})
 
         return render(request, 'applysupply.html', context=context)
 
@@ -367,6 +406,14 @@ class ApplySupply(View):
 
             supply.save()  # !!!! after all actions
 
+            #####
+            postoffice = user.postoffice_id.postoffice_name
+            request.session['num_active_supplies'] = Supply.objects.filter(
+                postoffice_recipient=postoffice,
+                status_sending=True,
+                status_receiving=False).count()
+
+
             return HttpResponseRedirect(reverse('apply_supply'))
 
         postoffice = request.user.postoffice_id
@@ -374,6 +421,7 @@ class ApplySupply(View):
         ids = [i.pk for i in supplies]
         all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
         context.update({'supplies': all_sup_wparts})
+        context.update({'num_active_supplies': request.session['num_active_supplies']})
 
         return render(request, 'applysupply.html', context=context)
 
@@ -406,6 +454,9 @@ class ShowCartridges(View):
         if user.role == '1':
             form = ShowCartridgesForm()
             context.update({'form': form})
+
+        if user.role == '2':
+            context.update({'num_active_supplies': request.session['num_active_supplies']})
 
         context.update({'states': states, 'postoffice': postoffice})
 

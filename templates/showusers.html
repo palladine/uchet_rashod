@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="container-fluid">
+            {% if user.role == '1' %}
+                    <div class="row mt-5">
+                        <div class="col-4"></div>
+                        <div class="col-4 d-flex justify-content-center">
+                            <div class="card text-center">
+                                <h4 class="card-header text-uppercase">{{ title }}</h4>
+                                <div class="card-body d-flex justify-content-center"></div>
+                            </div>
+                        </div>
+                        <div class="col-4"></div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-11 d-flex justify-content-center">
+                            <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
+                                <thead>
+                                    <tr>
+                                            <th>Логин</th>
+                                            <th>Электронная почта</th>
+                                            <th>Фамилия</th>
+                                            <th>Имя</th>
+                                            <th>Почтамт</th>
+                                            <th>Время последнего входа</th>
+                                            <th>Роль</th>
+                                            <th>Активность</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                   {% for user in users %}
+                                        <tr>
+                                            <td>{{ user.username }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>{{ user.last_name }}</td>
+                                            <td>{{ user.first_name }}</td>
+                                            <td>{{ user.postoffice_id }}</td>
+                                            <td>{{ user.last_login }}</td>
+                                            <td>{{ user.get_role_display }}</td>
+                                            <td class="td_act">
+                                                {% if user.is_active %}
+                                                    <i class="fa fa-check"></i>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                   {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col"></div>
+                    </div>
+
+            {% endif %}
+        </div>
+{% endblock %}

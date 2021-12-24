@@ -125,9 +125,6 @@ select:focus option {
       margin: auto;
 }
 
-a {
-    font-size: 0.9rem;
-}
 
 a, a:visited, a.nav-link, a.nav-link:visited {
     color: #909090;
@@ -164,6 +161,13 @@ nav.head {
     border-bottom: 1px solid rgba(144, 144, 144, 0.5);
 }
 
+.foot {
+    min-width: 1250px;
+    font-size: 0.73rem;
+    border-top: 1px solid rgba(144, 144, 144, 0.5);
+    color: #909090;
+}
+
 .menu {
     min-width: 190px;
     max-width: 190px;
@@ -197,6 +201,7 @@ hr {
     margin-left: 3px;
 }
 
+
 .table {
     font-size: 0.8rem;
     border: 1px solid rgba(144, 144, 144, 0.5);
@@ -226,7 +231,26 @@ th, td {
     width: 200px;
 }
 
+
+.td_act {
+    color: #909090;
+}
+
 .btn-xs {
     padding: 2px 2px;
     font-size: 0.8rem;
+}
+
+.badge {
+    border-radius: 15px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    font-size: 0.7rem;
+
+}
+
+.bg-primary {
+    background-color: rgba(26, 188, 156, 1) !important;
 }
