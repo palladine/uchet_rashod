@@ -248,9 +248,27 @@ th, td {
     padding-left: 0.3rem;
     padding-right: 0.3rem;
     font-size: 0.7rem;
-
 }
 
 .bg-primary {
     background-color: rgba(26, 188, 156, 1) !important;
+}
+
+.active_page {
+    padding-left: 6px;
+    padding-right: 6px;
+    color: rgba(26, 188, 156, .8);
+    border: 1px solid rgba(26, 188, 156, .8);
+    font-size: 1rem;
+}
+
+
+.disactive_page {
+    padding-left: 6px;
+    padding-right: 6px;
+    color:  rgba(144, 144, 144, 0.9) !important;
+}
+
+.page:hover {
+   color:  rgba(26, 188, 156, .8) !important;
 }

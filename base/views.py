@@ -6,6 +6,7 @@ from django.urls import reverse
 from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm, ShowCartridgesForm
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 import pandas
 import json
@@ -212,19 +213,19 @@ class AddCartridge(View):
                 messages.error(request, get_errors_form(form_multy), extra_tags='multy')
 
 
-        if 'download' in request.POST:
+        if 'download_template_cartridges' in request.POST:
             try:
                 path = os.path.join(BASE_DIR, 'base/static/misc/')
-                filename = 'template.xlsx'
+                filename = 'template_cartridges.xlsx'
                 file = open(path+filename, 'rb')
                 mime_type, _ = mimetypes.guess_type(path+filename)
                 response = HttpResponse(file, content_type=mime_type)
                 response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
 
-                messages.success(request, '', extra_tags='download')
+                messages.success(request, '', extra_tags='download_template_cartridges')
                 return response
             except Exception as e:
-                messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download')
+                messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
 
         return render(request, 'addcartridge.html', context=context)
 
@@ -302,6 +303,22 @@ class AddSupply(View):
                 return HttpResponseRedirect(reverse('add_supply'))
             else:
                 messages.error(request, get_errors_form(form_part), extra_tags='part')
+
+
+
+        if 'download_template_parts' in request.POST:
+            try:
+                path = os.path.join(BASE_DIR, 'base/static/misc/')
+                filename = 'template_parts.xlsx'
+                file = open(path + filename, 'rb')
+                mime_type, _ = mimetypes.guess_type(path + filename)
+                response = HttpResponse(file, content_type=mime_type)
+                response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+
+                messages.success(request, '', extra_tags='download_template_parts')
+                return response
+            except Exception as e:
+                messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_parts')
 
 
         id_sup_send = False
@@ -500,4 +517,29 @@ class ShowCartridges(View):
         context.update({'states': states, 'postoffice': postoffice, 'form': form})
         return render(request, 'showcartridges.html', context=context)
 
+
+class ShowNomenclatures(View):
+    def get(self, request):
+        context = {'title': 'Зарегистрированные номенклатуры картриджей'}
+
+        user = request.user
+        if user.role == '2':
+            context.update({'num_active_supplies': request.session['num_active_supplies']})
+
+        cartridges = Cartridge.objects.all()
+
+        # pagination
+        page = request.GET.get('page', 1)
+        paginator = Paginator(cartridges, 15)
+        try:
+            nomenclatures = paginator.page(page)
+        except PageNotAnInteger:
+            nomenclatures = paginator.page(1)
+        except EmptyPage:
+            nomenclatures = paginator.page(paginator.num_pages)
+
+
+        context.update({'nomenclatures': nomenclatures, 'range_visible': 2})
+
+        return render(request, 'shownomenclatures.html', context=context)
 

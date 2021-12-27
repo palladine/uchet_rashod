@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Main, AddPostoffice, AddCartridge, AddSupply, ApplySupply, ShowCartridges, ShowUsers
+from .views import Main, AddPostoffice, AddCartridge, AddSupply, ApplySupply, ShowCartridges, ShowUsers, ShowNomenclatures
 
 urlpatterns = [
     path('main', Main.as_view(), name='main'),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('apply_supply', ApplySupply.as_view(), name='apply_supply'),
     path('show_cartridges', ShowCartridges.as_view(), name='show_cartridges'),
     path('show_users', ShowUsers.as_view(), name='show_users'),
+    path('show_nomenclatures', ShowNomenclatures.as_view(), name='show_nomenclatures'),
 ]
