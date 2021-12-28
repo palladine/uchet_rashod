@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
-from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm, ShowCartridgesForm
+from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm, ShowCartridgesForm, AddPartsFileForm
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -241,9 +241,10 @@ class AddSupply(View):
 
         form_supply = AddSupplyForm()
         form_part = AddPartForm()
+        form_file_parts = AddPartsFileForm()
 
         supplies = Supply.objects.filter(status_sending=False)
-        active_supplies = [k for k in supplies if Part.objects.filter(id_supply=k.pk).count()>0]
+        active_supplies = [k for k in supplies if Part.objects.filter(id_supply=k.pk).count() > 0]
         ids = [i.pk for i in active_supplies]
         all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
 
@@ -251,22 +252,25 @@ class AddSupply(View):
                         'title': 'Создать поставку картриджей на почтамт',
                         'form_part': form_part,
                         'form_supply': form_supply,
+                        'form_file_parts': form_file_parts,
                         'supplies': all_sup_wparts})
 
         return render(request, 'addsupply.html', context=context)
-
 
 
     def post(self, request):
         context = {}
         form_supply = AddSupplyForm(request.POST)
         form_part = AddPartForm(request.POST)
+        form_file_parts = AddPartsFileForm(request.POST, request.FILES)
+
         user = request.user
 
         context.update(
             {'title': 'Создать поставку картриджей на почтамт',
              'form_supply': form_supply,
              'form_part': form_part,
+             'form_file_parts': form_file_parts,
              'user': user})
 
         if 'but_supply' in request.POST:
@@ -304,6 +308,48 @@ class AddSupply(View):
             else:
                 messages.error(request, get_errors_form(form_part), extra_tags='part')
 
+
+        if 'but_file_supply' in request.POST:
+            if form_file_parts.is_valid():
+                file_object = form_file_parts.cleaned_data.get('file')
+                file_bytes = file_object.read()
+
+                wb = pandas.read_excel(file_bytes)  # wb -----> DataFrame
+
+                nomenclatures = [x.nomenclature for x in Cartridge.objects.all()]
+                postoffices = [x.postoffice_name for x in Postoffice.objects.all()]
+
+                print(len(wb))
+
+                all_errors = []
+                all_active_parts = []
+                for unit in wb.to_numpy():
+                    nomenclature = unit[0].strip()
+                    postoffice = unit[1].strip()
+                    amount = unit[2]
+
+                    msg_error = ''
+                    if (nomenclature in nomenclatures) and (postoffice in postoffices) and (amount > 0):
+                        all_active_parts.append([nomenclature, postoffice, amount])
+
+                    if (nomenclature not in nomenclatures):
+                        msg_error += 'Неправильная номенклатура картриджа "{}"; '.format(nomenclature)
+
+                    if (postoffice not in postoffices):
+                        msg_error += 'Неправильное имя почтамта "{}"; '.format(postoffice)
+
+                    if (not isinstance(amount, int)):
+                        msg_error += 'Поле количество должно быть числом; '
+
+                    all_errors.append(msg_error)
+
+
+                # TODO: create supplies & parts
+                # !!! errors
+                print(all_errors)
+
+                # parts
+                print(all_active_parts)
 
 
         if 'download_template_parts' in request.POST:
@@ -530,7 +576,7 @@ class ShowNomenclatures(View):
 
         # pagination
         page = request.GET.get('page', 1)
-        paginator = Paginator(cartridges, 15)
+        paginator = Paginator(cartridges, 25)
         try:
             nomenclatures = paginator.page(page)
         except PageNotAnInteger:
@@ -539,7 +585,7 @@ class ShowNomenclatures(View):
             nomenclatures = paginator.page(paginator.num_pages)
 
 
-        context.update({'nomenclatures': nomenclatures, 'range_visible': 2})
+        context.update({'nomenclatures': nomenclatures})
 
         return render(request, 'shownomenclatures.html', context=context)
 

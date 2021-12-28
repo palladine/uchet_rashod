@@ -132,6 +132,15 @@ class AddCartridgesFileForm(forms.Form):
                                                       'style': 'display: none;'}))
 
 
+class AddPartsFileForm(forms.Form):
+    file = WorkFile(label='Файл', max_length=100, help_text=ht, required=True,
+                    widget=forms.FileInput(attrs={'class': 'form-control form-control-sm',
+                                                  'placeholder': 'ВЫБЕРИТЕ ФАЙЛ ...',
+                                                  'id': 'file',
+                                                  'style': 'display: none;'}))
+
+
+
 class PostofficeReceiverField(ModelChoiceField):
     # Validation
     def clean(self, value):
