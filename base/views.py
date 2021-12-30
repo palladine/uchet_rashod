@@ -315,18 +315,20 @@ class AddSupply(View):
                 file_bytes = file_object.read()
 
                 wb = pandas.read_excel(file_bytes)  # wb -----> DataFrame
+                wb = wb.dropna()
 
                 nomenclatures = [x.nomenclature for x in Cartridge.objects.all()]
                 postoffices = [x.postoffice_name for x in Postoffice.objects.all()]
 
-                print(len(wb))
-
                 all_errors = []
                 all_active_parts = []
                 for unit in wb.to_numpy():
-                    nomenclature = unit[0].strip()
-                    postoffice = unit[1].strip()
-                    amount = unit[2]
+
+                    nomenclature = str(unit[0]).strip()
+                    postoffice = str(unit[1]).strip()
+                    amount = str(unit[2]).strip()
+
+                    amount = int(amount) if amount.isdigit() else False
 
                     msg_error = ''
                     if (nomenclature in nomenclatures) and (postoffice in postoffices) and (amount > 0):
@@ -338,18 +340,34 @@ class AddSupply(View):
                     if (postoffice not in postoffices):
                         msg_error += 'Неправильное имя почтамта "{}"; '.format(postoffice)
 
-                    if (not isinstance(amount, int)):
+                    if (not amount):
                         msg_error += 'Поле количество должно быть числом; '
 
-                    all_errors.append(msg_error)
+                    if msg_error:
+                        all_errors.append(msg_error)
 
 
-                # TODO: create supplies & parts
+                # TODO: output all errors !
                 # !!! errors
                 print(all_errors)
 
-                # parts
-                print(all_active_parts)
+                rel_post_sup = dict()
+                for act_part in all_active_parts:
+                    po = act_part[1]
+                    if po in rel_post_sup:
+                        # create part
+                        part = Part(id_supply=rel_post_sup[po], postoffice=po, cartridge=act_part[0], amount=act_part[2])
+                        part.save()
+                    else:
+                        # create supply
+                        active_supply = Supply(postoffice_recipient=po)
+                        active_supply.save()
+
+                        rel_post_sup[po] = active_supply.pk
+
+                        # create part
+                        part = Part(id_supply=active_supply.pk, postoffice=po, cartridge=act_part[0], amount=act_part[2])
+                        part.save()
 
 
         if 'download_template_parts' in request.POST:
