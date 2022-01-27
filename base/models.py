@@ -11,6 +11,7 @@ from django.contrib.auth.models import AbstractUser
                 date_sending(db_index=True), date_receiving(db_index=True), status_sending, status_receiving)
     + 5. Part (id_supply, postoffice, nomenclature, amount)
     + 6. State (postoffice, cartridge, total_amount)
+    + 7. OPS (postoffice, index, address)
    
 
     !! Добавление первого пользователя суперадмина:
@@ -126,3 +127,16 @@ class State(BaseModel):
 
     def __str__(self):
         return "Учет картриджей"
+
+
+class OPS(BaseModel):
+    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Почтамт')
+    index = models.CharField(max_length=6, null=True, blank=True, default='', verbose_name="Индекс")
+    address = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name="Адрес")
+
+    class Meta:
+        verbose_name = "ОПС"
+        verbose_name_plural = "ОПС"
+
+    def __str__(self):
+        return "{} {}".format(self.meta.verbose_name, self.index)

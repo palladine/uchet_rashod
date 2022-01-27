@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Postoffice, Cartridge, Supply, Part, State
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -29,9 +29,13 @@ class ShowSupplyAdmin(admin.ModelAdmin):
 class ShowPartAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Part._meta.get_fields()]
 
+
 class ShowState(admin.ModelAdmin):
     list_display = [field.name for field in State._meta.get_fields()]
 
+
+class ShowOPS(admin.ModelAdmin):
+    list_display = [field.name for field in OPS._meta.get_fields()]
 
 admin.site.register(User, ShowUserAdmin)
 admin.site.register(Postoffice, ShowPostofficeAdmin)
@@ -39,3 +43,4 @@ admin.site.register(Cartridge, ShowCartridgAdmin)
 admin.site.register(Supply, ShowSupplyAdmin)
 admin.site.register(Part, ShowPartAdmin)
 admin.site.register(State, ShowState)
+admin.site.register(OPS, ShowOPS)

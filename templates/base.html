@@ -70,13 +70,23 @@
                         {% endif %}
 
                         {% if user.role == '1' %}
-                            <a class="nav-link text-uppercase" href="{% url 'add_postoffice' %}">Добавить почтамт</a>
                             <a class="nav-link text-uppercase" href="#">Добавить пользователя</a>
                             <a class="nav-link text-uppercase" href="{% url 'add_cartridge' %}">Добавить номенклатуру картриджа</a>
+                            <a class="nav-link text-uppercase" href="{% url 'add_postoffice' %}">Добавить почтамт</a>
+                        {% endif %}
+
+                            <a class="nav-link text-uppercase" href="{% url 'add_ops' %}">Добавить ОПС</a>
+                            <hr>
+
+
+                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Картриджи на почтамте (таблица)</a>
+
+                        {% if user.role == '1' %}
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
                             <hr>
                             <a class="nav-link text-uppercase" href="{% url 'show_users' %}">Зарегистрированные пользователи (таблица)</a>
                         {% endif %}
+
 
                         {% if user.role == '2' %}
                             <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Поставки
@@ -86,10 +96,14 @@
                                 </span>
                             {% endif %}
                             </a>
-                        {% endif%}
+                            <a class="nav-link text-uppercase" href="">Выдача картриджей ОПС</a>
+                            <a class="nav-link text-uppercase" href="">Реестр заявок ОПС</a>
+                            <hr>
+                        {% endif %}
 
                             <a class="nav-link text-uppercase" href="{% url 'show_nomenclatures' %}">Зарегистрированные номенклатуры картриджей (таблица)</a>
-                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Картриджи на почтамте (таблица)</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_ops' %}">Список ОПС (таблица)</a>
+
 
                     </nav>
                 </div>

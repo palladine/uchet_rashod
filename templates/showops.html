@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="container-fluid">
+
+                    <div class="row mt-5">
+                        <div class="col-4"></div>
+                        <div class="col-4 d-flex justify-content-center">
+                            <div class="card text-center">
+                                <h4 class="card-header text-uppercase">{{ title }}</h4>
+                                <div class="card-body d-flex justify-content-center"></div>
+                            </div>
+                        </div>
+                        <div class="col-4"></div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-8 d-flex justify-content-center">
+                            <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
+                                <thead>
+                                    <tr>
+                                            <th>Индекс</th>
+                                            <th>Адрес</th>
+                                            {% if user.role == '1' %}
+                                                <th>Почтамт</th>
+                                            {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                   {% for ops in ops_all %}
+                                        <tr>
+                                            <td>{{ ops.index }}</td>
+                                            <td>{{ ops.address }}</td>
+                                            {% if user.role == '1' %}
+                                                <td>{{ ops.postoffice.postoffice_name }}</td>
+                                            {% endif %}
+                                        </tr>
+                                   {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col"></div>
+                    </div>
+
+
+
+                    <div class="row mt-1 mb-5">
+                        <div class="col"></div>
+                        <div class="col-8 d-flex justify-content-center">
+                            {% if ops_all.has_other_pages %}
+                                    <div class="pagination">
+
+                                        {% if ops_all.has_previous %}
+                                            <div class="disactive_page my-auto">
+                                                <a href="?page=1" class="page">1</a>
+                                                ...
+                                                <a href="?page={{ ops_all.previous_page_number }}" class="page">{{ ops_all.previous_page_number }}</a>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="active_page my-auto">
+                                            {{ ops_all.number }}
+                                        </div>
+
+                                        {% if ops_all.has_next %}
+                                            <div class="disactive_page my-auto">
+                                                <a href="?page={{ ops_all.next_page_number }}" class="page">{{ ops_all.next_page_number }}</a>
+                                                ...
+                                                <a href="?page={{ ops_all.paginator.num_pages }}" class="page">{{ ops_all.paginator.num_pages }}</a>
+                                            </div>
+                                        {% endif %}
+
+                                    </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col"></div>
+                    </div>
+
+        </div>
+{% endblock %}

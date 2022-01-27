@@ -3,9 +3,10 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
-from .forms import LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm, AddSupplyForm, ShowCartridgesForm, AddPartsFileForm
+from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
+                    AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U)
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part, State
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 import pandas
@@ -141,6 +142,62 @@ class AddPostoffice(View):
 
 
 
+class AddOPS(View):
+    def get(self, request):
+        context = {}
+        user = request.user
+
+        context.update({'user': user, 'title': 'Добавление ОПС'})
+
+        if user.role == '1':
+            form_ops = AddOPSForm()
+            context.update({'form': form_ops})
+
+        if user.role == '2':
+            form_ops = AddOPSForm_U()
+            context.update({'form': form_ops})
+
+        return render(request, 'addops.html', context=context)
+
+
+    def post(self, request):
+        context = {}
+        user = request.user
+        context.update({'title': 'Добавление ОПС'})
+
+        form_ops = False
+
+        if user.role == '1':
+            form_ops = AddOPSForm(request.POST)
+            context.update({'form': form_ops})
+
+        if user.role == '2':
+            form_ops = AddOPSForm_U(request.POST)
+            context.update({'form': form_ops})
+
+        if form_ops.is_valid():
+
+            postoffice_name = request.POST.get('postoffice_name') if user.role == "1" else user.postoffice_id.postoffice_name
+            index = request.POST.get('index')
+            address = request.POST.get('address')
+
+            # save
+            postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
+
+            ops = OPS(postoffice=postoffice, index=index, address=address)
+            ops.save()
+            messages.success(request, 'ОПС добавлено')
+
+            return HttpResponseRedirect(reverse('add_ops'))
+
+        else:
+            messages.error(request, get_errors_form(form_ops))
+
+        return render(request, 'addops.html', context=context)
+
+
+
+
 class AddCartridge(View):
 
     def get(self, request):
@@ -228,7 +285,6 @@ class AddCartridge(View):
                 messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
 
         return render(request, 'addcartridge.html', context=context)
-
 
 
 
@@ -607,3 +663,34 @@ class ShowNomenclatures(View):
 
         return render(request, 'shownomenclatures.html', context=context)
 
+
+class ShowOPS(View):
+    def get(self, request):
+        context = {}
+        user = request.user
+
+        opss = False
+
+        if user.role == '1':
+            context.update({'title': 'Список зарегистрированных ОПС'})
+            opss = OPS.objects.all()
+
+        if user.role == '2':
+            context.update({'title': 'Список ОПС Почтамта'})
+            postoffice_obj = Postoffice.objects.get(postoffice_name=user.postoffice_id.postoffice_name)
+            opss = OPS.objects.filter(postoffice=postoffice_obj)
+
+        # pagination
+        if opss:
+            page = request.GET.get('page', 1)
+            paginator = Paginator(opss, 25)
+            try:
+                ops_all = paginator.page(page)
+            except PageNotAnInteger:
+                ops_all = paginator.page(1)
+            except EmptyPage:
+                ops_all = paginator.page(paginator.num_pages)
+
+            context.update({'ops_all': ops_all})
+
+        return render(request, 'showops.html', context=context)

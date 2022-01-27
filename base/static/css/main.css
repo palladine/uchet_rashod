@@ -179,7 +179,8 @@ nav.head {
     font-size: 0.73rem;
     text-align: end;
     border: 1px solid transparent;
-    padding-top: -1px;
+    padding-top: 3px;
+    padding-bottom: 4px;
     vertical-align: middle;
 }
 
