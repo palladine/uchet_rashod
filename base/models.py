@@ -37,7 +37,7 @@ class User(AbstractUser, BaseModel):
     last_name = models.CharField(max_length=50, null=True, blank=False, verbose_name="Фамилия")
     first_name = models.CharField(max_length=50, null=True, blank=False, verbose_name="Имя")
     middle_name = models.CharField(max_length=50, null=True, blank=True, verbose_name="Отчество")
-    postoffice_id = models.ForeignKey("Postoffice", null=True, blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
+    postoffice_id = models.ForeignKey("Postoffice", null=True, blank=False, on_delete=models.SET_NULL, verbose_name="Почтамт")
     date_joined = models.DateTimeField(auto_now_add=True, null=False, blank=False, verbose_name="Дата регистрации")
     last_login = models.DateTimeField(null=True, blank=False, verbose_name="Дата последнего входа")
 
@@ -73,7 +73,7 @@ class Cartridge(BaseModel):
     nomenclature = models.CharField(max_length=75, unique=True, null=False, blank=False, verbose_name="Номенклатура картриджа")
     printer_model = models.CharField(max_length=100, null=False, blank=False, default='', verbose_name="Модель принтера")
     is_drum = models.BooleanField(default=False, verbose_name="Драм")
-    source = models.CharField(max_length=255, null=False, blank=True, default='', verbose_name='Ресурс картриджа')
+    source = models.CharField(max_length=255, null=False, blank=True, default='', verbose_name="Ресурс картриджа")
 
     class Meta:
         verbose_name = "Картридж"
@@ -117,8 +117,8 @@ class Part(BaseModel):
 
 
 class State(BaseModel):
-    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Почтамт')
-    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Картридж')
+    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
     total_amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
 
     class Meta:
@@ -130,7 +130,7 @@ class State(BaseModel):
 
 
 class OPS(BaseModel):
-    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name='Почтамт')
+    postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
     index = models.CharField(max_length=6, null=True, blank=True, default='', verbose_name="Индекс")
     address = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name="Адрес")
 
@@ -140,3 +140,32 @@ class OPS(BaseModel):
 
     def __str__(self):
         return "{} {}".format(self.meta.verbose_name, self.index)
+
+
+class Supply_OPS(BaseModel):
+    ops_recipient = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС получатель")
+    user_sender = models.ForeignKey('User', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Отправитель")
+    data_text = models.TextField(null=False, blank=False, verbose_name="Данные заявки")
+    date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)
+    status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
+    status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
+
+    class Meta:
+        verbose_name = "Заявка ОПС"
+        verbose_name_plural = "Заявки ОПС"
+
+    def __str__(self):
+        return "Заявка №{0} (на {1})".format(self.pk, self.ops_recipient.index)
+
+
+class Part_OPS(BaseModel):
+    id_supply_ops = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС")
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
+    amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Позиция в заявке ОПС"
+        verbose_name_plural = "Позиции в заявках ОПС"
+
+    def __str__(self):
+        return "Позиция №{}".format(self.pk)

@@ -405,7 +405,7 @@ class AddSupply(View):
 
                 # TODO: output all errors !
                 # !!! errors
-                print(all_errors)
+                # print(all_errors)
 
                 rel_post_sup = dict()
                 for act_part in all_active_parts:
@@ -495,7 +495,7 @@ class AddSupply(View):
         return render(request, 'addsupply.html', context=context)
 
 
-
+## Принятие поставки на почтамте
 class ApplySupply(View):
 
     def get(self, request):
