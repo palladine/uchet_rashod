@@ -12,12 +12,12 @@
                     <h4 class="card-header text-uppercase">{{ title }}</h4>
 
                     <div class="card-body d-flex justify-content-center">
-                        <form action="{% url 'add_supply' %}" method="post" class="col-11" novalidate id="form_addsupply">
+                        <form action="{% url 'add_supply_ops' %}" method="post" class="col-11" novalidate id="form_addsupply">
                             {% csrf_token %}
 
                             <div class="mb-4">
-                                {{ form_supply.postoffice_name }}
-                                <p class="ht">{{ form_supply.postoffice_name.help_text }}</p>
+                                {{ form_supply_ops.ops }}
+                                <p class="ht">{{ form_supply_ops.ops.help_text }}</p>
                             </div>
 
                             <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" name='but_supply' type="submit">
@@ -39,22 +39,22 @@
                     <h4 class="card-header text-uppercase">Добавить позицию в поставку</h4>
 
                     <div class="card-body d-flex justify-content-center">
-                        <form action="{% url 'add_supply' %}" method="post" class="col-11" novalidate id="form_addpart">
+                        <form action="{% url 'add_supply_ops' %}" method="post" class="col-11" novalidate id="form_addpart">
                             {% csrf_token %}
 
                             <div class="mb-3">
-                                {{ form_part.supply }}
-                                <p class="ht">{{ form_part.supply.help_text }}</p>
+                                {{ form_part_ops.supply_ops }}
+                                <p class="ht">{{ form_part_ops.supply_ops.help_text }}</p>
                             </div>
 
                             <div class="mb-3">
-                                {{ form_part.nomenclature_cartridge }}
-                                <p class="ht">{{ form_part.nomenclature_cartridge.help_text }}</p>
+                                {{ form_part_ops.nomenclature_cartridge }}
+                                <p class="ht">{{ form_part_ops.nomenclature_cartridge.help_text }}</p>
                             </div>
 
                              <div class="mb-4">
-                                {{ form_part.amount }}
-                                <p class="ht">{{ form_part.amount.help_text }}</p>
+                                {{ form_part_ops.amount }}
+                                <p class="ht">{{ form_part_ops.amount.help_text }}</p>
                             </div>
 
                             <button class="btn btn-outline-primary btn-sm col-12 shadow-none" type="submit" name="but_part">
@@ -80,14 +80,14 @@
             <div class="col-4 d-flex justify-content-center text-center">
                     {% if messages %}
                         {% for message in messages %}
-                                {% if message.tags == 'supply success' or message.tags == 'download_template_parts success'%}
+                                {% if message.tags == 'supply success' %}
                                     <div class="success mt-2 mb-2">
                                         <i class="fa fa-check"></i>&nbsp;
                                         {{ message }}
                                     </div>
                                 {% endif %}
 
-                                {% if message.tags == 'supply error' or message.tags == 'download_template_parts error' %}
+                                {% if message.tags == 'supply error' %}
                                     <div class="error mt-2 mb-2">
                                         <i class="fa fa-exclamation"></i>&nbsp;
                                         {{ message }}
@@ -123,52 +123,13 @@
         </div>
 
 
-        <!-- file supply -->
-        <div class="row mt-4 mb-5">
-            <div class="col"></div>
-            <div class="col-4 d-flex justify-content-center">
-                <div class="card text-center">
-                    <h4 class="card-header text-uppercase">Создать поставку на основе файла</h4>
-
-                    <div class="card-body d-flex justify-content-center">
-                        <form enctype="multipart/form-data" action="{% url 'add_supply' %}" method="post" class="col-11" novalidate id="form_addsupply_file">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <div class="input-group">
-                                    {{ form_file_parts.file }}
-                                    <input type="text" id='textfile' autocomplete="off" class="form-control form-control-sm" placeholder = 'ВЫБЕРИТЕ ФАЙЛ ...'/>
-                                    <label class='labelfile' for='file'><span class="icon-inside"><i class="fa fa-folder-open"></i></span></label>
-                                </div>
-                                <p class="ht">{{ form_file_parts.file.help_text }}</p>
-                            </div>
-
-                            <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase mt-2 mb-3" name='but_file_supply' type="submit">
-                                Создать
-                            </button>
-
-                            <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" name='download_template_parts' type="submit">
-                                Скачать шаблон файла
-                            </button>
-
-                        </form>
-                    </div>
-
-                    <div class="card-footer">
-
-                    </div>
-                </div>
-            </div>
-            <div class="col"></div>
-        </div>
-
-
 
         <!-- table -->
         <div class="row mt-5 d-flex justify-content-center">
             <div class="col"></div>
             <div class='col-7'>
-                {% if supplies %}
-                    {% for sup in supplies%}
+                {% if supplies_ops %}
+                    {% for sup in supplies_ops%}
                         <table class='table table-sm table-hover table-bordered align-middle mb-5'>
                             <thead>
                                 <tr>
@@ -187,7 +148,7 @@
                             <tbody>
                                 {% for p in sup.1 %}
                                 <tr>
-                                    <td class="td_postoffice">{{ p.postoffice }}</td>
+                                    <td class="td_postoffice">{{ p.id_supply_ops }}</td>
                                     <td>{{ p.cartridge }}</td>
                                     <td class="td_amount">{{ p.amount }}</td>
                                     <td>

@@ -4,9 +4,10 @@ from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
-                    AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U)
+                    AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
+                    AddPartOPSForm)
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 import pandas
@@ -694,3 +695,92 @@ class ShowOPS(View):
             context.update({'ops_all': ops_all})
 
         return render(request, 'showops.html', context=context)
+
+
+class AddSupplyOPS(View):
+
+    def get(self, request):
+        context = {}
+        user = request.user
+        postoffice = user.postoffice_id
+
+        form_supply_ops = AddSupplyOPSForm(postoffice)
+        form_part_ops = AddPartOPSForm(postoffice)
+        # form_file_parts = AddPartsFileForm()
+
+        supplies_ops = Supply_OPS.objects.filter(status_sending=False)
+        active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops=k.pk).count() > 0]
+        ids = [i.pk for i in active_supplies]
+        all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops=p)) for p in ids]
+
+        context.update({'user': user,
+                        'title': 'Создать поставку картриджей на опс',
+                        'form_part_ops': form_part_ops,
+                        'form_supply_ops': form_supply_ops,
+                        #'form_file_parts': form_file_parts,
+                        'supplies_ops': all_sup_wparts})
+
+        return render(request, 'addsupplyops.html', context=context)
+
+
+    def post(self, request):
+        context = {}
+
+        user = request.user
+        postoffice = user.postoffice_id
+
+        form_supply_ops = AddSupplyOPSForm(postoffice, request.POST)
+        form_part_ops = AddPartOPSForm(postoffice, request.POST)
+        #form_file_parts = AddPartsFileForm(request.POST, request.FILES)
+
+
+        context.update(
+            {'title': 'Создать поставку картриджей на опс',
+             'form_supply_ops': form_supply_ops,
+             'form_part_ops': form_part_ops,
+             #'form_file_parts': form_file_parts,
+             'user': user})
+
+        if 'but_supply' in request.POST:
+            if form_supply_ops.is_valid():
+                ops = request.POST.get('ops')
+                ops_obj = OPS.objects.get(pk=ops)
+                # save supply_ops
+                supply_ops = Supply_OPS(ops_recipient=ops_obj)
+                supply_ops.save()
+
+                messages.success(request,
+                                 '{} создана. Необходимо добавить позиции в поставку.'.format(supply_ops),
+                                 extra_tags='supply')
+                return HttpResponseRedirect(reverse('add_supply_ops'))
+            else:
+                messages.error(request, get_errors_form(form_supply_ops), extra_tags='supply')
+
+        # if 'but_part' in request.POST:
+        #     if form_part.is_valid():
+        #         id_supply = request.POST.get('supply')
+        #         supply = Supply.objects.get(pk=id_supply)
+        #
+        #         nomenclature = request.POST.get('nomenclature_cartridge')
+        #         amount = request.POST.get('amount')
+        #
+        #         # save Part
+        #         part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature,
+        #                     amount=amount)
+        #         part.save()
+        #
+        #         messages.success(request,
+        #                          'Позиция в поставку ({}) добавлена.'.format(supply),
+        #                          extra_tags='part')
+        #         return HttpResponseRedirect(reverse('add_supply'))
+        #     else:
+        #         messages.error(request, get_errors_form(form_part), extra_tags='part')
+
+        supplies_ops = Supply_OPS.objects.filter(status_sending=False)
+        active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops=k.pk).count() > 0]
+        ids = [i.pk for i in active_supplies]
+        all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops=p)) for p in ids]
+
+        context.update({'supplies_ops': all_sup_wparts})
+
+        return render(request, 'addsupplyops.html', context=context)

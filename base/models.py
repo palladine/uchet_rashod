@@ -139,7 +139,7 @@ class OPS(BaseModel):
         verbose_name_plural = "ОПС"
 
     def __str__(self):
-        return "{} {}".format(self.meta.verbose_name, self.index)
+        return "{} {}".format(self._meta.verbose_name, self.index)
 
 
 class Supply_OPS(BaseModel):

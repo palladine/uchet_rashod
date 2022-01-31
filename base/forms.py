@@ -2,7 +2,7 @@ import os.path
 from django import forms
 from django.forms import CharField, FileField, ModelChoiceField
 from django.core.exceptions import ValidationError
-from .models import User, Cartridge, Postoffice, Supply
+from .models import User, Cartridge, Postoffice, Supply, OPS, Supply_OPS
 
 
 ht = '* Поле обязательное для заполнения'
@@ -202,7 +202,7 @@ class AddPartForm(forms.Form):
                                                     widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
     amount = AmountField(label='Количество', help_text=ht, required=True,
                         widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'КОЛИЧЕСТВО'}))
-# --------------- End Add Supply ---------------
+# --------------- End Add Part  ---------------
 
 
 
@@ -234,10 +234,65 @@ class AddOPSForm(forms.Form):
 
 
 
-# ---------------  Add OPS custom fields and form for User ---------------
+# ---------------  Add OPS custom fields and form for User (Not administrator) ---------------
 class AddOPSForm_U(forms.Form):
     index = IndexField(label='Индекс ОПС', max_length=6, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС ОПС'}))
     address = forms.CharField(label='Адрес ОПС', max_length=255, required=False,
                               widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'АДРЕС ОПС'}))
-# --------------- End Add OPS for User ---------------
+# --------------- End Add OPS for User (Not Administrator) ---------------
+
+
+
+# ---------------  Add Supply OPS custom fields and form ---------------
+class OPSField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ОПС" обязательное для заполнения'), code='empty')
+
+
+class AddSupplyOPSForm(forms.Form):
+    ops = OPSField(label='ОПС',
+                   queryset=None,
+                   help_text=ht, required=True,
+                   # to_field_name='index',
+                   empty_label='ВЫБЕРИТЕ ОПС ...',
+                   widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+
+    def __init__(self, po, *args, **kwargs):
+        super(AddSupplyOPSForm, self).__init__(*args, **kwargs)
+        self.fields['ops'].queryset = OPS.objects.filter(postoffice=po)
+
+
+# --------------- End Add Supply OPS ---------------
+
+
+# ---------------  Add Part OPS custom fields and form ---------------
+class SupplyOPSField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ПОСТАВКА" обязательное для заполнения'), code='empty')
+
+class AddPartOPSForm(forms.Form):
+    supply_ops = SupplyOPSField(label='Поставка на опс',
+                                queryset = None,
+                                help_text=ht, required=True,
+                                to_field_name='pk',
+                                empty_label='ВЫБЕРИТЕ ПОСТАВКУ ...',
+                                widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+    nomenclature_cartridge = NomenclaturePartField(label='Номенклатура картриджа',
+                                                   queryset=Cartridge.objects.all(),
+                                                   help_text=ht, required=True,
+                                                   to_field_name='nomenclature',
+                                                   empty_label='ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
+                                                   widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+    amount = AmountField(label='Количество', help_text=ht, required=True,
+                         widget=forms.NumberInput(
+                             attrs={'class': 'form-control form-control-sm', 'placeholder': 'КОЛИЧЕСТВО'}))
+
+    def __init__(self, po, *args, **kwargs):
+        super(AddPartOPSForm, self).__init__(*args, **kwargs)
+        self.fields['supply_ops'].queryset = Supply_OPS.objects.filter(ops_recipient__postoffice=po, status_sending=False)
+# --------------- End Add Part OPS  ---------------

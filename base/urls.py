@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (Main, AddPostoffice, AddCartridge, AddSupply, ApplySupply,
-                    ShowCartridges, ShowUsers, ShowNomenclatures, AddOPS, ShowOPS)
+                    ShowCartridges, ShowUsers, ShowNomenclatures, AddOPS, ShowOPS,
+                    AddSupplyOPS)
 
 urlpatterns = [
     path('main', Main.as_view(), name='main'),
@@ -13,4 +14,5 @@ urlpatterns = [
     path('show_nomenclatures', ShowNomenclatures.as_view(), name='show_nomenclatures'),
     path('add_ops', AddOPS.as_view(), name='add_ops'),
     path('show_ops', ShowOPS.as_view(), name='show_ops'),
+    path('add_supply_ops', AddSupplyOPS.as_view(), name='add_supply_ops'),
 ]
