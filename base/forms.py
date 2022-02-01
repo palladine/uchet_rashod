@@ -189,7 +189,7 @@ class AmountField(CharField):
 
 class AddPartForm(forms.Form):
     supply = SupplyField(label='Поставка',
-                        queryset=Supply.objects.filter(status_sending = False),
+                        queryset=Supply.objects.filter(status_sending=False),
                         help_text=ht, required=True,
                         to_field_name='pk',
                         empty_label='ВЫБЕРИТЕ ПОСТАВКУ ...',

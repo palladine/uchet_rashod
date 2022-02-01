@@ -145,27 +145,40 @@ class OPS(BaseModel):
 class Supply_OPS(BaseModel):
     ops_recipient = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС получатель")
     user_sender = models.ForeignKey('User', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Отправитель")
-    data_text = models.TextField(null=False, blank=False, verbose_name="Данные заявки")
+    data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)
     status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
     status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
 
     class Meta:
-        verbose_name = "Заявка ОПС"
-        verbose_name_plural = "Заявки ОПС"
+        verbose_name = "Поставка ОПС"
+        verbose_name_plural = "Поставка ОПС"
 
     def __str__(self):
-        return "Заявка №{0} (на {1})".format(self.pk, self.ops_recipient.index)
+        return "Поствка №{0} (на ОПС {1})".format(self.pk, self.ops_recipient.index)
 
 
 class Part_OPS(BaseModel):
-    id_supply_ops = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС")
+    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Поставка")
     cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
     amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
 
     class Meta:
-        verbose_name = "Позиция в заявке ОПС"
-        verbose_name_plural = "Позиции в заявках ОПС"
+        verbose_name = "Позиция в поставке ОПС"
+        verbose_name_plural = "Позиции в поставке ОПС"
 
     def __str__(self):
         return "Позиция №{}".format(self.pk)
+
+
+class State_OPS(BaseModel):
+    ops = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС")
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
+    total_amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Учет картриджей ОПС"
+        verbose_name_plural = "Учет картриджей ОПС"
+
+    def __str__(self):
+        return "Учет картриджей ОПС"

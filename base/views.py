@@ -7,7 +7,7 @@ from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridge
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
                     AddPartOPSForm)
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 import pandas
@@ -756,30 +756,101 @@ class AddSupplyOPS(View):
             else:
                 messages.error(request, get_errors_form(form_supply_ops), extra_tags='supply')
 
-        # if 'but_part' in request.POST:
-        #     if form_part.is_valid():
-        #         id_supply = request.POST.get('supply')
-        #         supply = Supply.objects.get(pk=id_supply)
-        #
-        #         nomenclature = request.POST.get('nomenclature_cartridge')
-        #         amount = request.POST.get('amount')
-        #
-        #         # save Part
-        #         part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature,
-        #                     amount=amount)
-        #         part.save()
-        #
-        #         messages.success(request,
-        #                          'Позиция в поставку ({}) добавлена.'.format(supply),
-        #                          extra_tags='part')
-        #         return HttpResponseRedirect(reverse('add_supply'))
-        #     else:
-        #         messages.error(request, get_errors_form(form_part), extra_tags='part')
+        if 'but_part' in request.POST:
+            if form_part_ops.is_valid():
+                id_supply = request.POST.get('supply_ops')
+                supply_obj = Supply_OPS.objects.get(pk=id_supply)
+
+                nomenclature = request.POST.get('nomenclature_cartridge')
+                cartridge_obj = Cartridge.objects.get(nomenclature=nomenclature)
+                amount = request.POST.get('amount')
+
+                postoffice_obj = supply_obj.ops_recipient.postoffice
+
+                state_amount = State.objects.filter(postoffice=postoffice_obj, cartridge=cartridge_obj).first()
+
+                if state_amount and (int(amount) <= state_amount.total_amount):
+                    # save Part
+                    part_ops = Part_OPS(id_supply_ops=supply_obj, cartridge=cartridge_obj, amount=amount)
+                    part_ops.save()
+
+                    messages.success(request, 'Позиция в поставку ({}) добавлена.'.format(supply_obj.pk), extra_tags='part')
+                    return HttpResponseRedirect(reverse('add_supply_ops'))
+                else:
+                    if state_amount:
+                        messages.error(request, f"Запрошенного количества картриджей нет на почтамте. Имеется {state_amount}.", extra_tags='part')
+                    else:
+                        messages.error(request, f"Картриджей ({nomenclature}) нет на почтамте.", extra_tags='part')
+            else:
+                messages.error(request, get_errors_form(form_part_ops), extra_tags='part')
+
+
+        id_sup_send = False
+        for var in request.POST:
+            if var.startswith('butsend'):
+                id_sup_send = var.split('_')[1]
+
+        if id_sup_send:
+            user = request.user
+
+            parts_send = Part_OPS.objects.filter(id_supply_ops__pk=id_sup_send)
+            data_text = ''
+            for p in parts_send:
+                str_act = '{0}:{1};'.format(p.cartridge, p.amount)
+                data_text += str_act
+
+            date_sending = datetime.now()
+            status_sending = True
+
+            Supply_OPS.objects.filter(pk=id_sup_send).update(user_sender=user,
+                                                         data_text=data_text,
+                                                         date_sending=date_sending,
+                                                         status_sending=status_sending)
+
+            # change state ops
+            active_parts = Part_OPS.objects.filter(id_supply_ops__pk=id_sup_send)
+            for part in active_parts:
+                state, state_created = State_OPS.objects.get_or_create(ops=part.id_supply_ops.ops_recipient, cartridge=part.cartridge)
+                if state_created:
+                    state.total_amount = part.amount
+                else:
+                    state.total_amount += part.amount
+                state.save()
+
+
+            # todo: change state postoffice
+
+
+            return HttpResponseRedirect(reverse('add_supply_ops'))
+
+
+
+        id_part_del = False
+        for var in request.POST:
+            if var.startswith('butpartdel'):
+                id_part_del = var.split('_')[1]
+
+        if id_part_del:
+            Part_OPS.objects.filter(pk=id_part_del).delete()
+            return HttpResponseRedirect(reverse('add_supply_ops'))
+
+        id_sup_del = False
+        for var in request.POST:
+            if var.startswith('butsupdel'):
+                id_sup_del = var.split('_')[1]
+
+        if id_sup_del:
+            supply_obj = Supply_OPS.objects.get(pk=id_sup_del)
+            Part_OPS.objects.filter(id_supply_ops=supply_obj).delete()
+            supply_obj.delete()
+            return HttpResponseRedirect(reverse('add_supply_ops'))
+
+
 
         supplies_ops = Supply_OPS.objects.filter(status_sending=False)
-        active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops=k.pk).count() > 0]
+        active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops__pk=k.pk).count() > 0]
         ids = [i.pk for i in active_supplies]
-        all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops=p)) for p in ids]
+        all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops__pk=p)) for p in ids]
 
         context.update({'supplies_ops': all_sup_wparts})
 

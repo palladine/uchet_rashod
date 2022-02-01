@@ -133,7 +133,7 @@
                         <table class='table table-sm table-hover table-bordered align-middle mb-5'>
                             <thead>
                                 <tr>
-                                    <th scope="row" colspan="3">{{ sup.0 }}</th>
+                                    <th scope="row" colspan="2">{{ sup.0 }}</th>
                                     <td class="td_but">
                                         <form method="post">
                                             {% csrf_token %}
@@ -148,7 +148,7 @@
                             <tbody>
                                 {% for p in sup.1 %}
                                 <tr>
-                                    <td class="td_postoffice">{{ p.id_supply_ops }}</td>
+
                                     <td>{{ p.cartridge }}</td>
                                     <td class="td_amount">{{ p.amount }}</td>
                                     <td>
@@ -165,7 +165,7 @@
 
                             <tfoot>
                             <tr>
-                                <td colspan="2"></td>
+                                <td colspan=""></td>
                                 <td colspan="2">
                                     <form method="post">
                                         {% csrf_token %}
