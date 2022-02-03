@@ -148,7 +148,6 @@ class Supply_OPS(BaseModel):
     data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)
     status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
-    status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
 
     class Meta:
         verbose_name = "Поставка ОПС"
@@ -182,3 +181,16 @@ class State_OPS(BaseModel):
 
     def __str__(self):
         return "Учет картриджей ОПС"
+
+
+class Act(BaseModel):
+    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Поставка")
+    date_creating = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания", db_index=True)
+    status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
+
+    class Meta:
+        verbose_name = "Акт"
+        verbose_name_plural = "Акты"
+
+    def __str__(self):
+        return "Акт №{0}".format(self.pk)

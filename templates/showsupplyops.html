@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="container-fluid">
+
+                    <div class="row mt-5">
+                        <div class="col-4"></div>
+                        <div class="col-4 d-flex justify-content-center">
+                            <div class="card text-center">
+                                <h4 class="card-header text-uppercase">{{ title }}</h4>
+                                <div class="card-body d-flex justify-content-center"></div>
+                            </div>
+                        </div>
+                        <div class="col-4"></div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-8 d-flex justify-content-center">
+                            <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
+                                <thead>
+                                    <tr>
+                                        {% for h in headers %}
+                                                <th>{{ h|safe }}</th>
+                                        {% endfor %}
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                   {% for supply in supplies %}
+                                        <tr>
+                                            <td>{{ supply.0 }}</td>
+                                            <td>{{ supply.1 }}</td>
+                                            <td>{{ supply.2|safe }}</td>
+
+                                            <td>
+                                                {{ supply.3|safe }}
+                                            </td>
+
+                                            <td>{{ supply.4 }}</td>
+                                            <td class="td_act">
+                                                {% if supply.5 %}
+                                                    <i class="fa fa-check"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td class="td_act">
+                                                {% if supply.6 %}
+                                                    <i class="fa fa-check"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td style="width: 35px;">
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase" type="submit" name="butact_{{ supply.0 }}">
+                                                        <i class="fa fa-print"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                   {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col"></div>
+                    </div>
+
+
+
+                    <div class="row mt-1 mb-5">
+                        <div class="col"></div>
+                        <div class="col-8 d-flex justify-content-center">
+                            {% if supplies.has_other_pages %}
+                                    <div class="pagination">
+
+                                        {% if supplies.has_previous %}
+                                            <div class="disactive_page my-auto">
+                                                <a href="?page=1" class="page">1</a>
+                                                ...
+                                                <a href="?page={{ supplies.previous_page_number }}" class="page">{{ supplies.previous_page_number }}</a>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="active_page my-auto">
+                                            {{ supplies.number }}
+                                        </div>
+
+                                        {% if supplies.has_next %}
+                                            <div class="disactive_page my-auto">
+                                                <a href="?page={{ supplies.next_page_number }}" class="page">{{ supplies.next_page_number }}</a>
+                                                ...
+                                                <a href="?page={{ supplies.paginator.num_pages }}" class="page">{{ supplies.paginator.num_pages }}</a>
+                                            </div>
+                                        {% endif %}
+
+                                    </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col"></div>
+                    </div>
+
+        </div>
+{% endblock %}

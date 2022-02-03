@@ -2,7 +2,7 @@ import os.path
 from django import forms
 from django.forms import CharField, FileField, ModelChoiceField
 from django.core.exceptions import ValidationError
-from .models import User, Cartridge, Postoffice, Supply, OPS, Supply_OPS
+from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS
 
 
 ht = '* Поле обязательное для заполнения'
@@ -295,4 +295,8 @@ class AddPartOPSForm(forms.Form):
     def __init__(self, po, *args, **kwargs):
         super(AddPartOPSForm, self).__init__(*args, **kwargs)
         self.fields['supply_ops'].queryset = Supply_OPS.objects.filter(ops_recipient__postoffice=po, status_sending=False)
+
+        cartridges_po = State.objects.filter(postoffice=po, total_amount__gt=0)
+        ctr = [c.cartridge.nomenclature for c in cartridges_po]
+        self.fields['nomenclature_cartridge'].queryset = Cartridge.objects.filter(nomenclature__in=ctr)
 # --------------- End Add Part OPS  ---------------

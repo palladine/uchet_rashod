@@ -7,11 +7,11 @@ from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridge
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
                     AddPartOPSForm)
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
+from django.db.models import F
 import pandas
-import json
 import os
 from datetime import datetime
 import mimetypes
@@ -584,7 +584,7 @@ class ShowCartridges(View):
             ### по аналогии с post !
             postoffice = user.postoffice_id
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
-            query = State.objects.filter(postoffice_id=postoffice_id)
+            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.total_amount])
@@ -612,7 +612,7 @@ class ShowCartridges(View):
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice_name).pk
 
             # !!!!!!!
-            query = State.objects.filter(postoffice_id=postoffice_id)
+            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
 
             states = []
             for q in query:
@@ -630,7 +630,7 @@ class ShowCartridges(View):
         postoffice = request.user.postoffice_id
         postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
 
-        query = State.objects.filter(postoffice_id=postoffice_id)
+        query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
         states = []
         for q in query:
             states.append([q.cartridge.nomenclature, q.total_amount])
@@ -728,6 +728,7 @@ class AddSupplyOPS(View):
 
         user = request.user
         postoffice = user.postoffice_id
+        postoffice_obj = Postoffice.objects.get(postoffice_name=postoffice)
 
         form_supply_ops = AddSupplyOPSForm(postoffice, request.POST)
         form_part_ops = AddPartOPSForm(postoffice, request.POST)
@@ -765,11 +766,11 @@ class AddSupplyOPS(View):
                 cartridge_obj = Cartridge.objects.get(nomenclature=nomenclature)
                 amount = request.POST.get('amount')
 
-                postoffice_obj = supply_obj.ops_recipient.postoffice
+                #postoffice_obj = supply_obj.ops_recipient.postoffice
 
                 state_amount = State.objects.filter(postoffice=postoffice_obj, cartridge=cartridge_obj).first()
 
-                if state_amount and (int(amount) <= state_amount.total_amount):
+                if int(amount) <= state_amount.total_amount:
                     # save Part
                     part_ops = Part_OPS(id_supply_ops=supply_obj, cartridge=cartridge_obj, amount=amount)
                     part_ops.save()
@@ -777,10 +778,7 @@ class AddSupplyOPS(View):
                     messages.success(request, 'Позиция в поставку ({}) добавлена.'.format(supply_obj.pk), extra_tags='part')
                     return HttpResponseRedirect(reverse('add_supply_ops'))
                 else:
-                    if state_amount:
-                        messages.error(request, f"Запрошенного количества картриджей нет на почтамте. Имеется {state_amount}.", extra_tags='part')
-                    else:
-                        messages.error(request, f"Картриджей ({nomenclature}) нет на почтамте.", extra_tags='part')
+                    messages.error(request, f"Запрошенного количества картриджей ({nomenclature}) нет на почтамте. Имеется {state_amount.total_amount}.", extra_tags='part')
             else:
                 messages.error(request, get_errors_form(form_part_ops), extra_tags='part')
 
@@ -792,11 +790,11 @@ class AddSupplyOPS(View):
 
         if id_sup_send:
             user = request.user
-
             parts_send = Part_OPS.objects.filter(id_supply_ops__pk=id_sup_send)
+
             data_text = ''
-            for p in parts_send:
-                str_act = '{0}:{1};'.format(p.cartridge, p.amount)
+            for part in parts_send:
+                str_act = '{0}:{1};'.format(part.cartridge, part.amount)
                 data_text += str_act
 
             date_sending = datetime.now()
@@ -808,8 +806,7 @@ class AddSupplyOPS(View):
                                                          status_sending=status_sending)
 
             # change state ops
-            active_parts = Part_OPS.objects.filter(id_supply_ops__pk=id_sup_send)
-            for part in active_parts:
+            for part in parts_send:
                 state, state_created = State_OPS.objects.get_or_create(ops=part.id_supply_ops.ops_recipient, cartridge=part.cartridge)
                 if state_created:
                     state.total_amount = part.amount
@@ -817,12 +814,11 @@ class AddSupplyOPS(View):
                     state.total_amount += part.amount
                 state.save()
 
-
-            # todo: change state postoffice
-
+            # change state postoffice
+            for part in parts_send:
+                State.objects.filter(postoffice=postoffice_obj, cartridge=part.cartridge).update(total_amount=F('total_amount')-part.amount)
 
             return HttpResponseRedirect(reverse('add_supply_ops'))
-
 
 
         id_part_del = False
@@ -855,3 +851,71 @@ class AddSupplyOPS(View):
         context.update({'supplies_ops': all_sup_wparts})
 
         return render(request, 'addsupplyops.html', context=context)
+
+
+
+class ShowSupplyOPS(View):
+    def get(self, request):
+        user = request.user
+        context = {'user': user, 'title': 'Реестр поставок на ОПС'}
+
+        query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id).order_by('-id')
+        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Данные поставки', 'Дата отправки', 'Отправлена', 'Акт<br>распечатан', '']
+
+        supplies = []
+        for query_supply in query_supplies:
+            dt = "<br>".join(query_supply.data_text.split(';'))
+
+            supply = [query_supply.id,
+                      query_supply.ops_recipient.index,
+                      "{}<br>({} {})". format(query_supply.user_sender.username, query_supply.user_sender.first_name, query_supply.user_sender.last_name),
+                      dt,
+                      query_supply.date_sending,
+                      query_supply.status_sending]
+
+
+            act = Act.objects.filter(id_supply_ops=query_supply)
+            if act:
+                supply.append(act.first().status_act)
+            else:
+                supply.append('')
+
+            supplies.append(supply)
+
+
+        # pagination
+        if supplies:
+            page = request.GET.get('page', 1)
+            paginator = Paginator(supplies, 10)
+            try:
+                supplies_all = paginator.page(page)
+            except PageNotAnInteger:
+                supplies_all = paginator.page(1)
+            except EmptyPage:
+                supplies_all = paginator.page(paginator.num_pages)
+
+
+            context.update({'supplies': supplies_all, 'headers': headers})
+
+        return render(request, 'showsupplyops.html', context=context)
+
+
+    def post(self, request):
+        user = request.user
+        context = {'user': user, 'title': 'Реестр поставок на ОПС'}
+
+        id_sup_act = False
+        for var in request.POST:
+            if var.startswith('butact'):
+                id_sup_act = var.split('_')[1]
+
+        if id_sup_act:
+            supply_obj = Supply_OPS.objects.get(id=id_sup_act)
+            act_obj, act_created = Act.objects.get_or_create(id_supply_ops=supply_obj)
+            if act_created:
+                act_obj.date_creating=datetime.now()
+                act_obj.status_act=True
+                act_obj.save()
+
+
+        return HttpResponseRedirect(reverse('show_supply_ops'))
