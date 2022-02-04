@@ -1,7 +1,5 @@
-import numpy as np
-from django.http import JsonResponse
 from django.views import View
-from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
@@ -12,6 +10,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.db.models import F
 import pandas
+import openpyxl as xl
 import os
 from datetime import datetime
 import mimetypes
@@ -914,8 +913,45 @@ class ShowSupplyOPS(View):
             act_obj, act_created = Act.objects.get_or_create(id_supply_ops=supply_obj)
             if act_created:
                 act_obj.date_creating=datetime.now()
-                act_obj.status_act=True
+                act_obj.status_act=False
                 act_obj.save()
+
+            path = os.path.join(BASE_DIR, 'base/static/misc/')
+            path_acts = os.path.join(BASE_DIR, 'base/static/misc/acts/')
+            filename = 'template_act.xlsx'
+            new_filename=f"act_{act_obj.pk}_{act_obj.date_creating.date()}.xlsx"
+
+            new_wb = None
+            if os.path.exists(path_acts+new_filename):
+                new_wb = xl.load_workbook(path_acts+new_filename)
+            else:
+                # copy to new excel file
+                wb = xl.load_workbook(path+filename)
+                new_wb = wb
+
+                ws = new_wb.active
+                #ws.cell(row=1, column=1).value = act_obj.pk
+                ws['F2'] = act_obj.pk
+                ws['H2'] = act_obj.date_creating.date().strftime("%d.%m.%Y")
+                user_sender = supply_obj.user_sender
+                ws['E4'] = "{} {} {}".format(user_sender.last_name, user_sender.first_name, user_sender.middle_name)
+                ws['E5'] = f"ОПС {supply_obj.ops_recipient.index}"
+                ws['H6'] = datetime.now().strftime("%d.%m.%Y %H:%M")
+
+                for pos in supply_obj.data_text.split(";"):
+                    if pos:
+                        elist = pos.split(":")
+                        ws.insert_rows(11)
+                        #ws.merge_cells('C11:G11')
+                        ws['C11'] = elist[0]
+                        ws['H11'] = elist[1]
+
+
+                    new_wb.save(filename=path_acts+new_filename)
+
+            # print
+            ...
+
 
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
