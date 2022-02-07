@@ -1,6 +1,8 @@
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from openpyxl.utils.cell import coordinate_from_string, column_index_from_string, get_column_letter
+
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
                     AddPartOPSForm)
@@ -11,6 +13,8 @@ from django.contrib import messages
 from django.db.models import F
 import pandas
 import openpyxl as xl
+from openpyxl.styles import Alignment
+from openpyxl.styles.borders import Border, Side
 import os
 from datetime import datetime
 import mimetypes
@@ -919,7 +923,7 @@ class ShowSupplyOPS(View):
             path = os.path.join(BASE_DIR, 'base/static/misc/')
             path_acts = os.path.join(BASE_DIR, 'base/static/misc/acts/')
             filename = 'template_act.xlsx'
-            new_filename=f"act_{act_obj.pk}_{act_obj.date_creating.date()}.xlsx"
+            new_filename = f"act_{act_obj.pk}_{act_obj.date_creating.date()}.xlsx"
 
             new_wb = None
             if os.path.exists(path_acts+new_filename):
@@ -930,7 +934,6 @@ class ShowSupplyOPS(View):
                 new_wb = wb
 
                 ws = new_wb.active
-                #ws.cell(row=1, column=1).value = act_obj.pk
                 ws['F2'] = act_obj.pk
                 ws['H2'] = act_obj.date_creating.date().strftime("%d.%m.%Y")
                 user_sender = supply_obj.user_sender
@@ -938,20 +941,41 @@ class ShowSupplyOPS(View):
                 ws['E5'] = f"ОПС {supply_obj.ops_recipient.index}"
                 ws['H6'] = datetime.now().strftime("%d.%m.%Y %H:%M")
 
+                c = 0
                 for pos in supply_obj.data_text.split(";"):
                     if pos:
+                        point = 11+c
                         elist = pos.split(":")
-                        ws.insert_rows(11)
-                        #ws.merge_cells('C11:G11')
-                        ws['C11'] = elist[0]
-                        ws['H11'] = elist[1]
+                        ws.insert_rows(point)
+                        cell_range = 'C{0}:G{0}'.format(point)
+                        ws.merge_cells(cell_range)
 
+                        brd = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+                        ws['B{}'.format(point)] = c+1
+                        ws['B{}'.format(point)].alignment = Alignment(horizontal='center')
+                        ws['B{}'.format(point)].border = brd
+                        ws['C{}'.format(point)] = elist[0]
+                        ws['H{}'.format(point)] = elist[1]
+                        ws['H{}'.format(point)].alignment = Alignment(horizontal='center')
+                        ws['H{}'.format(point)].border = brd
 
-                    new_wb.save(filename=path_acts+new_filename)
+                        # border merge cell
+                        start_cell, end_cell = cell_range.split(':')
+                        start_coord = coordinate_from_string(start_cell)
+                        start_row = start_coord[1]
+                        start_col = column_index_from_string(start_coord[0])
+                        end_coord = coordinate_from_string(end_cell)
+                        end_row = end_coord[1]
+                        end_col = column_index_from_string(end_coord[0])
 
-            # print
-            ...
+                        for row in range(start_row, end_row + 1):
+                            for col_idx in range(start_col, end_col + 1):
+                                col = get_column_letter(col_idx)
+                                ws['{}{}'.format(col, row)].border = brd
+                        c+=1
+                new_wb.save(filename=path_acts+new_filename)
 
-
+            # open act file in system
+            os.system("start EXCEL.EXE {}".format(path_acts+new_filename))
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
