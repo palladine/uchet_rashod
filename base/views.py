@@ -1,8 +1,6 @@
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from openpyxl.utils.cell import coordinate_from_string, column_index_from_string, get_column_letter
-
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
                     AddPartOPSForm)
@@ -13,8 +11,8 @@ from django.contrib import messages
 from django.db.models import F
 import pandas
 import openpyxl as xl
-from openpyxl.styles import Alignment
-from openpyxl.styles.borders import Border, Side
+from openpyxl.styles import Alignment, Side, Border, Font
+from openpyxl.utils.cell import coordinate_from_string, column_index_from_string, get_column_letter
 import os
 from datetime import datetime
 import mimetypes
@@ -951,13 +949,16 @@ class ShowSupplyOPS(View):
                         ws.merge_cells(cell_range)
 
                         brd = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+                        fnt = Font(name="Times New Roman", size=11)
                         ws['B{}'.format(point)] = c+1
                         ws['B{}'.format(point)].alignment = Alignment(horizontal='center')
                         ws['B{}'.format(point)].border = brd
+                        ws['B{}'.format(point)].font = fnt
                         ws['C{}'.format(point)] = elist[0]
                         ws['H{}'.format(point)] = elist[1]
                         ws['H{}'.format(point)].alignment = Alignment(horizontal='center')
                         ws['H{}'.format(point)].border = brd
+                        ws['H{}'.format(point)].font = fnt
 
                         # border merge cell
                         start_cell, end_cell = cell_range.split(':')
@@ -972,6 +973,7 @@ class ShowSupplyOPS(View):
                             for col_idx in range(start_col, end_col + 1):
                                 col = get_column_letter(col_idx)
                                 ws['{}{}'.format(col, row)].border = brd
+                                ws['{}{}'.format(col, row)].font = fnt
                         c+=1
                 new_wb.save(filename=path_acts+new_filename)
 
