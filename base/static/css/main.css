@@ -61,6 +61,14 @@ body {
     border-radius: 0px;
     background-color: #fdfdfd;
     border-color: #d0d0d0;
+    padding: 0.25rem, 0.5rem;
+    font-size: 0.75rem;
+}
+
+.form-select {
+    background-size: 0.55rem;
+    background-position-x: right 0.6rem;
+    background-position-y: center;
 }
 
 .form-control-sm:focus, .form-select-sm:focus, .form-select:focus, .form-control:hover, .form-select:hover {
@@ -73,6 +81,7 @@ select:invalid:not(:focus) {
   color: #909090;
   font-size: 0.75rem;
 }
+
 select:invalid:focus {
   color: #909090;
   font-size: 0.75rem;
@@ -82,13 +91,16 @@ select:focus option {
   color: initial;
 }
 
-
-.form-control::placeholder, .form-select::placeholder {
+.form-control::placeholder{
     color: #909090;
     padding: 0px 3px;
     font-size: 0.75rem;
 }
 
+.form-select::placeholder {
+    color: #909090;
+    padding: 0px 3px;
+}
 
 .form-switch {
      font-size: 0.8rem;
