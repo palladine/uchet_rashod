@@ -746,9 +746,10 @@ class AddSupplyOPS(View):
         if 'but_supply' in request.POST:
             if form_supply_ops.is_valid():
                 ops = request.POST.get('ops')
+                task_naumen = request.POST.get('task_naumen')
                 ops_obj = OPS.objects.get(pk=ops)
                 # save supply_ops
-                supply_ops = Supply_OPS(ops_recipient=ops_obj)
+                supply_ops = Supply_OPS(ops_recipient=ops_obj, id_task_naumen=task_naumen)
                 supply_ops.save()
 
                 messages.success(request,
@@ -861,16 +862,17 @@ class ShowSupplyOPS(View):
         context = {'user': user, 'title': 'Реестр поставок на ОПС'}
 
         query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id).order_by('-id')
-        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Данные поставки', 'Дата отправки', 'Отправлена', 'Акт<br>распечатан', '']
+        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Запрос Naumen', 'Дата отправки', 'Отправлена', 'Акт<br>распечатан', '']
 
         supplies = []
         for query_supply in query_supplies:
-            dt = "<br>".join(query_supply.data_text.split(';'))
+            #dt = "<br>".join(query_supply.data_text.split(';'))
 
             supply = [query_supply.id,
                       query_supply.ops_recipient.index,
                       "{}<br>({} {})". format(query_supply.user_sender.username, query_supply.user_sender.first_name, query_supply.user_sender.last_name),
-                      dt,
+                      #dt,
+                      query_supply.id_task_naumen,
                       query_supply.date_sending,
                       query_supply.status_sending]
 
@@ -938,11 +940,12 @@ class ShowSupplyOPS(View):
                 ws['E4'] = "{} {} {}".format(user_sender.last_name, user_sender.first_name, user_sender.middle_name)
                 ws['E5'] = f"ОПС {supply_obj.ops_recipient.index}"
                 ws['H6'] = datetime.now().strftime("%d.%m.%Y %H:%M")
+                ws['H8'] = supply_obj.id_task_naumen
 
                 c = 0
                 for pos in supply_obj.data_text.split(";"):
                     if pos:
-                        point = 11+c
+                        point = 12+c
                         elist = pos.split(":")
                         ws.insert_rows(point)
                         cell_range = 'C{0}:G{0}'.format(point)
@@ -979,5 +982,8 @@ class ShowSupplyOPS(View):
 
             # open act file in system
             os.system("start EXCEL.EXE {}".format(path_acts+new_filename))
+
+            act_obj.status_act = True
+            act_obj.save()
 
         return HttpResponseRedirect(reverse('show_supply_ops'))

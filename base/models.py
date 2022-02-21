@@ -145,6 +145,7 @@ class OPS(BaseModel):
 class Supply_OPS(BaseModel):
     ops_recipient = models.ForeignKey('OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="ОПС получатель")
     user_sender = models.ForeignKey('User', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Отправитель")
+    id_task_naumen = models.TextField(default='', blank=True, null=True, verbose_name="Номер запроса в Naumen")
     data_text = models.TextField(null=False, blank=False, verbose_name="Данные поставки")
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата отправки", db_index=True)
     status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")

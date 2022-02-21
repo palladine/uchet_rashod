@@ -256,15 +256,16 @@ class AddSupplyOPSForm(forms.Form):
     ops = OPSField(label='ОПС',
                    queryset=None,
                    help_text=ht, required=True,
-                   # to_field_name='index',
                    empty_label='ВЫБЕРИТЕ ОПС ...',
                    widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+    task_naumen = forms.CharField(label='Номер запроса в Naumen', max_length=50, required=False,
+                              widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
+                                                            'placeholder': 'НОМЕР ЗАПРОСА В NAUMEN',
+                                                            'autocomplete': 'off'}))
 
     def __init__(self, po, *args, **kwargs):
         super(AddSupplyOPSForm, self).__init__(*args, **kwargs)
         self.fields['ops'].queryset = OPS.objects.filter(postoffice=po)
-
-
 # --------------- End Add Supply OPS ---------------
 
 
