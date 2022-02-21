@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
-from django.db.models import F
+from django.db.models import F, Sum
 import pandas
 import openpyxl as xl
 from openpyxl.styles import Alignment, Side, Border, Font
@@ -699,7 +699,6 @@ class ShowOPS(View):
 
 
 class AddSupplyOPS(View):
-
     def get(self, request):
         context = {}
         user = request.user
@@ -772,7 +771,16 @@ class AddSupplyOPS(View):
 
                 state_amount = State.objects.filter(postoffice=postoffice_obj, cartridge=cartridge_obj).first()
 
-                if int(amount) <= state_amount.total_amount:
+                ####
+                ops_postoffice = OPS.objects.filter(postoffice=postoffice_obj)
+                open_supplies_postoffice = Supply_OPS.objects.filter(status_sending=False, ops_recipient__in=ops_postoffice)
+                open_parts = Part_OPS.objects.filter(id_supply_ops__in=open_supplies_postoffice, cartridge=cartridge_obj)
+
+                ## количество картриджей номенклатуры в открытых поставках
+                parts_amount = open_parts.aggregate(Sum('amount')).get('amount__sum', 0)
+                parts_amount = parts_amount if parts_amount else 0
+
+                if int(amount) <= state_amount.total_amount-parts_amount:
                     # save Part
                     part_ops = Part_OPS(id_supply_ops=supply_obj, cartridge=cartridge_obj, amount=amount)
                     part_ops.save()
@@ -780,7 +788,9 @@ class AddSupplyOPS(View):
                     messages.success(request, 'Позиция в поставку ({}) добавлена.'.format(supply_obj.pk), extra_tags='part')
                     return HttpResponseRedirect(reverse('add_supply_ops'))
                 else:
-                    messages.error(request, f"Запрошенного количества картриджей ({nomenclature}) нет на почтамте. Имеется {state_amount.total_amount}.", extra_tags='part')
+                    messages.error(request,
+                                   f"Запрошенного количества картриджей ({nomenclature}) нет на почтамте (с учетом открытых поставок на ОПС). "
+                                   f"Имеется {state_amount.total_amount - parts_amount}.", extra_tags='part')
             else:
                 messages.error(request, get_errors_form(form_part_ops), extra_tags='part')
 
@@ -861,17 +871,17 @@ class ShowSupplyOPS(View):
         user = request.user
         context = {'user': user, 'title': 'Реестр поставок на ОПС'}
 
-        query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id).order_by('-id')
-        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Запрос Naumen', 'Дата отправки', 'Отправлена', 'Акт<br>распечатан', '']
+        query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id, status_sending=True).order_by('-id')
+        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Данные поставки', 'Запрос Naumen', 'Дата отправки', 'Акт<br>распечатан', '']
 
         supplies = []
         for query_supply in query_supplies:
-            #dt = "<br>".join(query_supply.data_text.split(';'))
+            dt = "<br>".join(query_supply.data_text.split(';'))
 
             supply = [query_supply.id,
                       query_supply.ops_recipient.index,
-                      "{}<br>({} {})". format(query_supply.user_sender.username, query_supply.user_sender.first_name, query_supply.user_sender.last_name),
-                      #dt,
+                      "{}<br>({} {})".format(query_supply.user_sender.username, query_supply.user_sender.first_name, query_supply.user_sender.last_name),
+                      dt,
                       query_supply.id_task_naumen,
                       query_supply.date_sending,
                       query_supply.status_sending]
