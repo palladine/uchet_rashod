@@ -45,7 +45,7 @@
                                     {% if message.tags == 'error' %}
                                         <div class="error mt-2 mb-2">
                                             <i class="fa fa-exclamation"></i>&nbsp;
-                                            {{ message }}
+                                            {{ message|safe }}
                                         </div>
                                     {% endif %}
                                 {% endfor %}

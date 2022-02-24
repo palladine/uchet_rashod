@@ -98,14 +98,14 @@
                                 {% if message.tags == 'single success' %}
                                     <div class="success mt-2 mb-2">
                                         <i class="fa fa-check"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
 
                                 {% if message.tags == 'single error' %}
                                     <div class="error mt-2 mb-2">
                                         <i class="fa fa-exclamation"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
                         {% endfor %}
@@ -120,7 +120,7 @@
                                 {% if message.tags == 'multy success' or message.tags == 'download_template_cartridges success' %}
                                     <div class="success mt-2 mb-2">
                                         <i class="fa fa-check"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
 
@@ -129,7 +129,7 @@
                                 {% if message.tags == 'multy error' or message.tags == 'download_template_cartridges error' %}
                                     <div class="error mt-2 mb-2">
                                         <i class="fa fa-exclamation"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
                         {% endfor %}

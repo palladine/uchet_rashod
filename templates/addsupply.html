@@ -83,14 +83,14 @@
                                 {% if message.tags == 'supply success' or message.tags == 'download_template_parts success'%}
                                     <div class="success mt-2 mb-2">
                                         <i class="fa fa-check"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
 
                                 {% if message.tags == 'supply error' or message.tags == 'download_template_parts error' %}
                                     <div class="error mt-2 mb-2">
                                         <i class="fa fa-exclamation"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
                         {% endfor %}
@@ -105,14 +105,14 @@
                                 {% if message.tags == 'part success' %}
                                     <div class="success mt-2 mb-2">
                                         <i class="fa fa-check"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
 
                                 {% if message.tags == 'part error' %}
                                     <div class="error mt-2 mb-2">
                                         <i class="fa fa-exclamation"></i>&nbsp;
-                                        {{ message }}
+                                        {{ message|safe }}
                                     </div>
                                 {% endif %}
                         {% endfor %}
