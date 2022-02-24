@@ -1,5 +1,9 @@
 *.sqlite
 *.sqlite3
+.git
+.idea
+__pycache__
 /base/migrations
 /base/static/misc/acts
 /static
+/acc_materials/settings.py

@@ -70,7 +70,7 @@
                         {% endif %}
 
                         {% if user.role == '1' %}
-                            <a class="nav-link text-uppercase" href="#">Добавить пользователя</a>
+                            <a class="nav-link text-uppercase" href="{% url 'add_user' %}">Добавить пользователя</a>
                             <a class="nav-link text-uppercase" href="{% url 'add_cartridge' %}">Добавить номенклатуру картриджа</a>
                             <a class="nav-link text-uppercase" href="{% url 'add_postoffice' %}">Добавить почтамт</a>
                         {% endif %}

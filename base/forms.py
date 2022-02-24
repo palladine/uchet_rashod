@@ -1,7 +1,8 @@
 import os.path
 from django import forms
-from django.forms import CharField, FileField, ModelChoiceField
+from django.forms import CharField, FileField, ModelChoiceField, EmailField
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS
 
 
@@ -16,10 +17,6 @@ class LoginField(CharField):
         if not value:
             raise ValidationError(('Поле "ЛОГИН" обязательное для заполнения'), code='empty')
 
-        query_unique = Postoffice.objects.filter(postoffice_name=value).exists()
-        if query_unique:
-            raise ValidationError(('Пользователь с именем "{}" уже зарегистрирован, введите другое имя'.format(value)),
-                                  code='unique')
 
 class PasswordField(CharField):
     # Validation
@@ -31,7 +28,7 @@ class PasswordField(CharField):
 class LoginForm(forms.Form):
     login = LoginField(label='Имя пользователя',
                             max_length=100,
-                            widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ЛОГИН', 'autocomplete': 'off'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИМЯ ПОЛЬЗОВАТЕЛЯ (ЛОГИН)', 'autocomplete': 'off'}))
     password = PasswordField(label='Пароль',
                                widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПАРОЛЬ'}))
 # --------------- End Login ---------------
@@ -301,3 +298,72 @@ class AddPartOPSForm(forms.Form):
         ctr = [c.cartridge.nomenclature for c in cartridges_po]
         self.fields['nomenclature_cartridge'].queryset = Cartridge.objects.filter(nomenclature__in=ctr)
 # --------------- End Add Part OPS  ---------------
+
+
+# ---------------  Add User custom fields and form ---------------
+class AddUserLoginField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ИМЯ ПОЛЬЗОВАТЕЛЯ" обязательное для заполнения'), code='empty')
+
+        query_unique = User.objects.filter(username=value).exists()
+        if query_unique:
+            raise ValidationError(('Пользователь с именем "{}" уже зарегистрирован, введите другое имя'.format(value)),
+                                  code='unique')
+
+class AddUserLastnameField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ФАМИЛИЯ" обязательное для заполнения'), code='empty')
+
+class AddUserFirstnameField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ИМЯ" обязательное для заполнения'), code='empty')
+
+class AddUserMiddlenameField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ОТЧЕСТВО" обязательное для заполнения'), code='empty')
+
+class AddUserEmailField(EmailField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "E-MAIL" обязательное для заполнения'), code='empty')
+
+        result = validate_email(value)
+
+
+class AddUserForm(forms.Form):
+    login = AddUserLoginField(label='Имя пользователя',
+                       max_length=100, help_text=ht, required=True,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИМЯ ПОЛЬЗОВАТЕЛЯ (ЛОГИН)', 'autocomplete': 'off'}))
+
+    password = PasswordField(label='Пароль', help_text=ht, widget=forms.PasswordInput(
+                                 attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПАРОЛЬ'}))
+
+    lastname = AddUserLastnameField(label='Имя', max_length=100, help_text=ht, required=True,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИМЯ', 'autocomplete': 'off'}))
+
+    firstname = AddUserFirstnameField(label='Фамилия', max_length=100, help_text=ht, required=True,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ФАМИЛИЯ', 'autocomplete': 'off'}))
+
+    middlename = AddUserMiddlenameField(label='Отчество', max_length=100, help_text=ht, required=True,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ОТЧЕСТВО', 'autocomplete': 'off'}))
+
+    postoffice = PostofficeField(label='Почтамт',
+                                             queryset=Postoffice.objects.all(),
+                                             help_text=ht, required=True,
+                                             to_field_name='postoffice_name',
+                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+    email = AddUserEmailField(label='E-mail', max_length=255, help_text=ht, required=True,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'E-MAIL', 'autocomplete': 'off'}))
+# --------------- End Add User ---------------
+
+

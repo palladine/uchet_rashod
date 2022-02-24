@@ -3,7 +3,7 @@ from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
-                    AddPartOPSForm)
+                    AddPartOPSForm, AddUserForm)
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -997,3 +997,46 @@ class ShowSupplyOPS(View):
             act_obj.save()
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
+
+
+class AddUser(View):
+    def get(self, request):
+        context = {}
+        user = request.user
+        form = AddUserForm()
+
+        context.update({'user': user, 'title': 'Добавление пользователя', 'form': form})
+
+        return render(request, 'adduser.html', context=context)
+
+    def post(self, request):
+        context = {}
+        form = AddUserForm(request.POST)
+        context.update({'title': 'Добавление пользователя', 'form': form})
+
+        if form.is_valid():
+
+            login = request.POST.get('login')
+            password = request.POST.get('password')
+
+            last_name = request.POST.get('lastname')
+            first_name = request.POST.get('firstname')
+            middle_name = request.POST.get('middlename')
+            postoffice_name = request.POST.get('postoffice')
+            postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
+            email = request.POST.get('email')
+
+            # save
+            new_user = User(username=login, email=email, last_name=last_name, first_name=first_name,
+                            middle_name=middle_name, postoffice_id=postoffice, date_joined=datetime.now(),
+                            last_login=datetime.now(), role='2', is_staff=False, is_active=True)
+            new_user.set_password(password)  # !!! пароль защифрован - только так
+            new_user.save()
+            messages.success(request, 'Пользователь добавлен')
+
+            return HttpResponseRedirect(reverse('add_user'))
+
+        else:
+            messages.error(request, get_errors_form(form))
+
+        return render(request, 'adduser.html', context=context)
