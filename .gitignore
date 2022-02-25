@@ -2,6 +2,7 @@
 *.sqlite3
 .git
 .idea
+settings.py
 __pycache__
 /base/migrations
 /base/static/misc/acts
