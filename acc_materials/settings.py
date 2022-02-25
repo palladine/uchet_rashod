@@ -120,8 +120,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = "/var/www/materials/static/"
-STATICFILES_DIRS = ['/var/www/materials/base/static']
+#STATIC_ROOT = "/var/www/materials/static/"
+STATIC_ROOT = BASE_DIR / 'base/static/'
+#STATICFILES_DIRS = ['/var/www/materials/base/static']
 
 
 # Default primary key field type

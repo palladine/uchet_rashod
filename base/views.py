@@ -16,7 +16,7 @@ from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
 import os
 from datetime import datetime
 import mimetypes
-from acc_materials.settings import BASE_DIR
+from acc_materials.settings import BASE_DIR, STATIC_ROOT
 
 def get_errors_form(form):
     errors_dict = {}
@@ -930,8 +930,8 @@ class ShowSupplyOPS(View):
                 act_obj.status_act=False
                 act_obj.save()
 
-            path = os.path.join(BASE_DIR, 'base/static/misc/')
-            path_acts = os.path.join(BASE_DIR, 'base/static/misc/acts/')
+            path = os.path.join(STATIC_ROOT, 'misc/')
+            path_acts = os.path.join(STATIC_ROOT, 'misc/acts/')
             filename = 'template_act.xlsx'
             new_filename = f"act_{act_obj.pk}_{act_obj.date_creating.date()}.xlsx"
 
