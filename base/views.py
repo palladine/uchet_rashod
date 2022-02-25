@@ -274,7 +274,7 @@ class AddCartridge(View):
 
         if 'download_template_cartridges' in request.POST:
             try:
-                path = os.path.join(BASE_DIR, 'base/static/misc/')
+                path = os.path.join(STATIC_ROOT, 'misc/')
                 filename = 'template_cartridges.xlsx'
                 file = open(path+filename, 'rb')
                 mime_type, _ = mimetypes.guess_type(path+filename)
@@ -430,7 +430,7 @@ class AddSupply(View):
 
         if 'download_template_parts' in request.POST:
             try:
-                path = os.path.join(BASE_DIR, 'base/static/misc/')
+                path = os.path.join(STATIC_ROOT, 'misc/')
                 filename = 'template_parts.xlsx'
                 file = open(path + filename, 'rb')
                 mime_type, _ = mimetypes.guess_type(path + filename)
@@ -991,10 +991,21 @@ class ShowSupplyOPS(View):
                 new_wb.save(filename=path_acts+new_filename)
 
             # open act file in system
-            os.system("start EXCEL.EXE {}".format(path_acts+new_filename))
+            #os.system("start EXCEL.EXE {}".format(path_acts+new_filename))
 
+            try:
+                file = open(path_acts+new_filename, 'rb')
+                mime_type, _ = mimetypes.guess_type(path_acts+new_filename)
+                response = HttpResponse(file, content_type=mime_type)
+                response['Content-Disposition'] = 'attachment; filename={}'.format(new_filename)
+                # messages.success(request, '', extra_tags='download_template_cartridges')
+                return response
+            except Exception as e:
+                # messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
+                ...
             act_obj.status_act = True
             act_obj.save()
+
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
 
