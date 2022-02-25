@@ -1007,6 +1007,7 @@ class ShowSupplyOPS(View):
             act_obj.save()
 
 
+
         return HttpResponseRedirect(reverse('show_supply_ops'))
 
 
