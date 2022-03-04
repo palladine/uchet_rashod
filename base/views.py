@@ -100,7 +100,7 @@ class ShowUsers(View):
 
         user = request.user
         if user.role == '1':
-            all_users = User.objects.all()
+            all_users = User.objects.all().order_by('username')
             context.update({'users': all_users})
 
         return render(request, 'showusers.html', context=context)
@@ -675,12 +675,12 @@ class ShowOPS(View):
 
         if user.role == '1':
             context.update({'title': 'Список зарегистрированных ОПС'})
-            opss = OPS.objects.all()
+            opss = OPS.objects.all().order_by('postoffice__postoffice_name', 'index')
 
         if user.role == '2':
             context.update({'title': 'Список ОПС Почтамта'})
             postoffice_obj = Postoffice.objects.get(postoffice_name=user.postoffice_id.postoffice_name)
-            opss = OPS.objects.filter(postoffice=postoffice_obj)
+            opss = OPS.objects.filter(postoffice=postoffice_obj).order_by('index')
 
         # pagination
         if opss:
@@ -1062,14 +1062,21 @@ class ShowSupply(View):
         for query_supply in query_supplies:
             dt = "<br>".join(query_supply.data_text.split(';'))
 
+            ds = query_supply.date_sending
+            date_s = ds if ds else ''
+
+            dr = query_supply.date_receiving
+            date_r = dr if dr else ''
+
+
             supply = [query_supply.id,
                       query_supply.postoffice_recipient,
                       query_supply.user_sender,
                       query_supply.user_recipient,
                       dt,
-                      query_supply.date_sending,
-                      query_supply.date_receiving,
-                      query_supply.status_sending]
+                      date_s,
+                      date_r,
+                      query_supply.status_receiving]
 
             supplies.append(supply)
 
