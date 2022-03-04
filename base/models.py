@@ -165,7 +165,7 @@ class State_OPS(BaseModel):
 
 
 class Act(BaseModel):
-    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Поставка")
+    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.CASCADE, verbose_name="Поставка")
     date_creating = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания", db_index=True)
     status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
 

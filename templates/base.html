@@ -84,6 +84,7 @@
 
                         {% if user.role == '1' %}
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_supply' %}">Реестр поставок на почтамты</a>
                             <hr>
                             <a class="nav-link text-uppercase" href="{% url 'show_users' %}">Зарегистрированные пользователи (таблица)</a>
                         {% endif %}

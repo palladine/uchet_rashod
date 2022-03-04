@@ -853,8 +853,6 @@ class AddSupplyOPS(View):
             supply_obj.delete()
             return HttpResponseRedirect(reverse('add_supply_ops'))
 
-
-
         supplies_ops = Supply_OPS.objects.filter(status_sending=False)
         active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops__pk=k.pk).count() > 0]
         ids = [i.pk for i in active_supplies]
@@ -927,7 +925,7 @@ class ShowSupplyOPS(View):
             act_obj, act_created = Act.objects.get_or_create(id_supply_ops=supply_obj)
             if act_created:
                 act_obj.date_creating=datetime.now()
-                act_obj.status_act=False
+                act_obj.status_act = False
                 act_obj.save()
 
             path = os.path.join(STATIC_ROOT, 'misc/')
@@ -987,7 +985,7 @@ class ShowSupplyOPS(View):
                                 col = get_column_letter(col_idx)
                                 ws['{}{}'.format(col, row)].border = brd
                                 ws['{}{}'.format(col, row)].font = fnt
-                        c+=1
+                        c += 1
                 new_wb.save(filename=path_acts+new_filename)
 
             # open act file in system
@@ -1005,8 +1003,6 @@ class ShowSupplyOPS(View):
                 ...
             act_obj.status_act = True
             act_obj.save()
-
-
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
 
@@ -1052,3 +1048,42 @@ class AddUser(View):
             messages.error(request, get_errors_form(form))
 
         return render(request, 'adduser.html', context=context)
+
+
+class ShowSupply(View):
+    def get(self, request):
+        user = request.user
+        context = {'user': user, 'title': 'Реестр поставок на почтамты'}
+
+        query_supplies = Supply.objects.filter(status_sending=True).order_by('-id')
+        headers = ['№<br>поставки', 'Почтамт', 'Отправил', 'Получил', 'Данные поставки', 'Дата отправки', 'Дата приемки', 'Принята']
+
+        supplies = []
+        for query_supply in query_supplies:
+            dt = "<br>".join(query_supply.data_text.split(';'))
+
+            supply = [query_supply.id,
+                      query_supply.postoffice_recipient,
+                      query_supply.user_sender,
+                      query_supply.user_recipient,
+                      dt,
+                      query_supply.date_sending,
+                      query_supply.date_receiving,
+                      query_supply.status_sending]
+
+            supplies.append(supply)
+
+        # pagination
+        if supplies:
+            page = request.GET.get('page', 1)
+            paginator = Paginator(supplies, 10)
+            try:
+                supplies_all = paginator.page(page)
+            except PageNotAnInteger:
+                supplies_all = paginator.page(1)
+            except EmptyPage:
+                supplies_all = paginator.page(paginator.num_pages)
+
+            context.update({'supplies': supplies_all, 'headers': headers})
+
+        return render(request, 'showsupply.html', context=context)
