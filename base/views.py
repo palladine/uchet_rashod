@@ -588,7 +588,7 @@ class ShowCartridges(View):
             query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
             states = []
             for q in query:
-                states.append([q.cartridge.nomenclature, q.total_amount])
+                states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
 
         if user.role == '1':
             form = ShowCartridgesForm()
@@ -617,7 +617,7 @@ class ShowCartridges(View):
 
             states = []
             for q in query:
-                states.append([q.cartridge.nomenclature, q.total_amount])
+                states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
 
             request.session['states'] = states
             request.session['postoffice'] = postoffice_name
@@ -634,7 +634,7 @@ class ShowCartridges(View):
         query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
         states = []
         for q in query:
-            states.append([q.cartridge.nomenclature, q.total_amount])
+            states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
 
         context.update({'states': states, 'postoffice': postoffice, 'form': form})
         return render(request, 'showcartridges.html', context=context)

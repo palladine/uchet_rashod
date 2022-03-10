@@ -79,15 +79,16 @@
                                 <table class='table table-sm table-hover table-bordered align-middle mb-5'>
                                     <thead>
                                         <tr>
-                                            <th scope="row" colspan="2">{{ postoffice }}</th>
+                                            <th scope="row" colspan="3">{{ postoffice }}</th>
                                         </tr>
                                     </thead>
 
                                     <tbody>
                                        {% for state in states %}
                                             <tr>
-                                                <td>{{ state.0 }}</td>
-                                                <td class="td_amount">{{ state.1 }}</td>
+                                                <td class="td_nomenclature">{{ state.0 }}</td>
+                                                <td>{{ state.1 }}</td>
+                                                <td class="td_amount">{{ state.2 }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
