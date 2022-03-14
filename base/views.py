@@ -1,5 +1,7 @@
+import urllib
+from urllib.request import Request, urlopen
 from django.views import View
-from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
@@ -881,8 +883,7 @@ class ShowSupplyOPS(View):
                       "{}<br>({} {})".format(query_supply.user_sender.username, query_supply.user_sender.first_name, query_supply.user_sender.last_name),
                       dt,
                       query_supply.id_task_naumen,
-                      query_supply.date_sending,
-                      query_supply.status_sending]
+                      query_supply.date_sending]
 
 
             act = Act.objects.filter(id_supply_ops=query_supply)
@@ -997,12 +998,12 @@ class ShowSupplyOPS(View):
                 response = HttpResponse(file, content_type=mime_type)
                 response['Content-Disposition'] = 'attachment; filename={}'.format(new_filename)
                 # messages.success(request, '', extra_tags='download_template_cartridges')
+                act_obj.status_act = True
+                act_obj.save()
                 return response
             except Exception as e:
                 # messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
                 ...
-            act_obj.status_act = True
-            act_obj.save()
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
 
