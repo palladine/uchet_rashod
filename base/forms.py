@@ -135,6 +135,17 @@ class AddCartridgesFileForm(forms.Form):
 
 
 
+# --------------- Add OPS from file ---------------
+class AddOPSFileForm(forms.Form):
+    file = WorkFile(label='Файл', max_length=100, help_text=ht, required=True,
+                        widget=forms.FileInput(attrs={'class': 'form-control form-control-sm',
+                                                      'placeholder': 'ВЫБЕРИТЕ ФАЙЛ ...',
+                                                      'id': 'file',
+                                                      'style': 'display: none;'}))
+# --------------- End Add OPS from file ---------------
+
+
+
 # ---------------  Add Supply and Parts from file custom fields and form ---------------
 class AddPartsFileForm(forms.Form):
     file = WorkFile(label='Файл', max_length=100, help_text=ht, required=True,

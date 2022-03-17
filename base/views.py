@@ -4,8 +4,8 @@ from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
-                    AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddSupplyOPSForm,
-                    AddPartOPSForm, AddUserForm)
+                    AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddOPSFileForm,
+                    AddSupplyOPSForm, AddPartOPSForm, AddUserForm)
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -161,6 +161,9 @@ class AddOPS(View):
             form_ops = AddOPSForm_U()
             context.update({'form': form_ops})
 
+        form_file_ops = AddOPSFileForm()
+        context.update({'form_multy_ops': form_file_ops})
+
         return render(request, 'addops.html', context=context)
 
 
@@ -179,23 +182,79 @@ class AddOPS(View):
             form_ops = AddOPSForm_U(request.POST)
             context.update({'form': form_ops})
 
-        if form_ops.is_valid():
+        form_file_ops = AddOPSFileForm(request.POST, request.FILES)
 
-            postoffice_name = request.POST.get('postoffice_name') if user.role == "1" else user.postoffice_id.postoffice_name
-            index = request.POST.get('index')
-            address = request.POST.get('address')
+        if 'single_ops' in request.POST:
+            if form_ops.is_valid():
 
-            # save
-            postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
+                postoffice_name = request.POST.get('postoffice_name') if user.role == "1" else user.postoffice_id.postoffice_name
+                index = request.POST.get('index')
+                address = request.POST.get('address')
 
-            ops = OPS(postoffice=postoffice, index=index, address=address)
-            ops.save()
-            messages.success(request, 'ОПС добавлено')
+                # save
+                postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
 
-            return HttpResponseRedirect(reverse('add_ops'))
+                ops = OPS(postoffice=postoffice, index=index, address=address)
+                ops.save()
+                messages.success(request, 'ОПС добавлено', extra_tags='single_ops')
 
-        else:
-            messages.error(request, get_errors_form(form_ops))
+                return HttpResponseRedirect(reverse('add_ops'))
+
+            else:
+                messages.error(request, get_errors_form(form_ops), extra_tags='single_ops')
+
+
+        if 'multy_ops' in request.POST:
+            if form_file_ops.is_valid():
+                file_object = form_file_ops.cleaned_data.get('file')
+                file_bytes = file_object.read()
+
+                wb = pandas.read_excel(file_bytes)  # wb -----> DataFrame
+
+                count_created = 0
+                for unit in wb.to_numpy():
+                    postoffice_name = unit[0].strip()
+                    index_ops = str(unit[1]).strip()
+                    address = unit[2].strip()
+
+                    postoffice = None
+                    # admin
+                    if user.role == '1':
+                        postoffice = Postoffice.objects.filter(postoffice_name=postoffice_name).first()
+
+                    # user
+                    if user.role == '2':
+                        if user.postoffice_id == Postoffice.objects.filter(postoffice_name=postoffice_name).first():
+                            postoffice = user.postoffice_id
+                        else:
+                            continue
+
+                    if postoffice:
+                        obj, created = OPS.objects.get_or_create(index=index_ops, defaults={'postoffice': postoffice, 'address': address})
+                        if created:
+                            count_created += 1
+
+                messages.success(request, f'ОПС добавлены ({count_created} позиций)', extra_tags='multy_ops')
+                return HttpResponseRedirect(reverse('add_ops'))
+
+            else:
+                messages.error(request, get_errors_form(form_file_ops), extra_tags='multy_ops')
+
+
+        if 'download_template_ops' in request.POST:
+                try:
+                    path = os.path.join(STATIC_ROOT, 'misc/')
+                    filename = 'template_ops.xlsx'
+                    file = open(path+filename, 'rb')
+                    mime_type, _ = mimetypes.guess_type(path+filename)
+                    response = HttpResponse(file, content_type=mime_type)
+                    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+
+                    messages.success(request, '', extra_tags='download_template_ops')
+                    return response
+                except Exception as e:
+                    messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_ops')
+
 
         return render(request, 'addops.html', context=context)
 
