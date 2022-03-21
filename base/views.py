@@ -1,7 +1,5 @@
-import urllib
-from urllib.request import Request, urlopen
 from django.views import View
-from django.shortcuts import render, HttpResponse, HttpResponseRedirect, redirect
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddOPSFileForm,
@@ -19,6 +17,8 @@ import os
 from datetime import datetime
 import mimetypes
 from acc_materials.settings import BASE_DIR, STATIC_ROOT
+
+
 
 def get_errors_form(form):
     errors_dict = {}
@@ -98,8 +98,10 @@ class Main(View):
 
 class ShowUsers(View):
     def get(self, request):
-        context = {'title': 'Зарегистрированные пользователи'}
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
 
+        context = {'title': 'Зарегистрированные пользователи'}
         user = request.user
         if user.role == '1':
             all_users = User.objects.all().order_by('username')
@@ -110,14 +112,18 @@ class ShowUsers(View):
 
 
 class AddPostoffice(View):
-
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
+        context.update({'user': user, 'title': 'Добавление почтамта'})
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
+
         form = AddPostofficeForm()
-
-        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form})
-
+        context.update({'form': form})
         return render(request, 'addpostoffice.html', context=context)
 
 
@@ -127,7 +133,6 @@ class AddPostoffice(View):
         context.update({'title': 'Добавление почтамта', 'form': form })
 
         if form.is_valid():
-
             postoffice_name = request.POST.get('postoffice_name')
             index = request.POST.get('index')
             address = request.POST.get('address')
@@ -136,18 +141,18 @@ class AddPostoffice(View):
             postoffice = Postoffice(postoffice_name=postoffice_name, index=index, address=address)
             postoffice.save()
             messages.success(request, 'Почтамт добавлен')
-
             return HttpResponseRedirect(reverse('add_postoffice'))
-
         else:
             messages.error(request, get_errors_form(form))
-
         return render(request, 'addpostoffice.html', context=context)
 
 
 
 class AddOPS(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
 
@@ -159,7 +164,7 @@ class AddOPS(View):
 
         if user.role == '2':
             form_ops = AddOPSForm_U()
-            context.update({'form': form_ops})
+            context.update({'form': form_ops, 'num_active_supplies': request.session['num_active_supplies']})
 
         form_file_ops = AddOPSFileForm()
         context.update({'form_multy_ops': form_file_ops})
@@ -262,19 +267,21 @@ class AddOPS(View):
 
 
 class AddCartridge(View):
-
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
+        context.update({'user': user, 'title': 'Добавление номенклатуры картриджа'})
+
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
 
         form_single = AddCartridgeForm()
         form_multy = AddCartridgesFileForm()
 
-        context.update({'user': user,
-                        'title': 'Добавление номенклатуры картриджа',
-                        'form_single': form_single,
-                        'form_multy': form_multy})
-
+        context.update({'form_single': form_single, 'form_multy': form_multy})
         return render(request, 'addcartridge.html', context=context)
 
 
@@ -353,10 +360,16 @@ class AddCartridge(View):
 
 
 class AddSupply(View):
-
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
+        context.update({'user': user, 'title': 'Создать поставку картриджей на почтамт'})
+
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
 
         form_supply = AddSupplyForm()
         form_part = AddPartForm()
@@ -367,13 +380,10 @@ class AddSupply(View):
         ids = [i.pk for i in active_supplies]
         all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
 
-        context.update({'user': user,
-                        'title': 'Создать поставку картриджей на почтамт',
-                        'form_part': form_part,
+        context.update({'form_part': form_part,
                         'form_supply': form_supply,
                         'form_file_parts': form_file_parts,
                         'supplies': all_sup_wparts})
-
         return render(request, 'addsupply.html', context=context)
 
 
@@ -560,11 +570,17 @@ class AddSupply(View):
 
 ## Принятие поставки на почтамте
 class ApplySupply(View):
-
     def get(self, request):
-        context = {}
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
 
-        postoffice = request.user.postoffice_id
+        context = {}
+        user = request.user
+
+        if user.role == '1':
+            return render(request, 'main.html', context=context)
+
+        postoffice = user.postoffice_id
         supplies = Supply.objects.filter(postoffice_recipient=postoffice, status_sending=True, status_receiving=False)
         ids = [i.pk for i in supplies]
         all_sup_wparts = [(Supply.objects.get(pk=p), Part.objects.filter(id_supply=p)) for p in ids]
@@ -628,8 +644,10 @@ class ApplySupply(View):
 
 
 class ShowCartridges(View):
-
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {'title': 'Картриджи на почтамте'}
 
         user = request.user
@@ -663,7 +681,6 @@ class ShowCartridges(View):
         return render(request, 'showcartridges.html', context=context)
 
 
-
     def post(self, request):
         context = {}
         form = ShowCartridgesForm(request.POST)
@@ -673,7 +690,6 @@ class ShowCartridges(View):
             postoffice_name = request.POST.get('postoffice_name')
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice_name).pk
 
-            # !!!!!!!
             query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
 
             states = []
@@ -703,6 +719,9 @@ class ShowCartridges(View):
 
 class ShowNomenclatures(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {'title': 'Зарегистрированные номенклатуры картриджей'}
 
         user = request.user
@@ -721,7 +740,6 @@ class ShowNomenclatures(View):
         except EmptyPage:
             nomenclatures = paginator.page(paginator.num_pages)
 
-
         context.update({'nomenclatures': nomenclatures})
 
         return render(request, 'shownomenclatures.html', context=context)
@@ -729,6 +747,9 @@ class ShowNomenclatures(View):
 
 class ShowOPS(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
 
@@ -739,7 +760,7 @@ class ShowOPS(View):
             opss = OPS.objects.all().order_by('postoffice__postoffice_name', 'index')
 
         if user.role == '2':
-            context.update({'title': 'Список ОПС Почтамта'})
+            context.update({'title': 'Список ОПС Почтамта', 'num_active_supplies': request.session['num_active_supplies']})
             postoffice_obj = Postoffice.objects.get(postoffice_name=user.postoffice_id.postoffice_name)
             opss = OPS.objects.filter(postoffice=postoffice_obj).order_by('index')
 
@@ -761,13 +782,19 @@ class ShowOPS(View):
 
 class AddSupplyOPS(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
+
+        if user.role == '1':
+            return render(request, 'main.html', context=context)
+
         postoffice = user.postoffice_id
 
         form_supply_ops = AddSupplyOPSForm(postoffice)
         form_part_ops = AddPartOPSForm(postoffice)
-        # form_file_parts = AddPartsFileForm()
 
         supplies_ops = Supply_OPS.objects.filter(status_sending=False)
         active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops=k.pk).count() > 0]
@@ -778,8 +805,8 @@ class AddSupplyOPS(View):
                         'title': 'Создать поставку картриджей на опс',
                         'form_part_ops': form_part_ops,
                         'form_supply_ops': form_supply_ops,
-                        #'form_file_parts': form_file_parts,
-                        'supplies_ops': all_sup_wparts})
+                        'supplies_ops': all_sup_wparts,
+                        'num_active_supplies': request.session['num_active_supplies']})
 
         return render(request, 'addsupplyops.html', context=context)
 
@@ -927,8 +954,15 @@ class AddSupplyOPS(View):
 
 class ShowSupplyOPS(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         user = request.user
         context = {'user': user, 'title': 'Реестр поставок на ОПС'}
+
+        if user.role == "1":
+            return render(request, 'main.html', context=context)
+
 
         query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id, status_sending=True).order_by('-id')
         headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Данные поставки', 'Запрос Naumen', 'Дата отправки', 'Акт<br>распечатан', '']
@@ -966,7 +1000,9 @@ class ShowSupplyOPS(View):
                 supplies_all = paginator.page(paginator.num_pages)
 
 
-            context.update({'supplies': supplies_all, 'headers': headers})
+            context.update({'supplies': supplies_all,
+                            'headers': headers,
+                            'num_active_supplies': request.session['num_active_supplies']})
 
         return render(request, 'showsupplyops.html', context=context)
 
@@ -1069,13 +1105,20 @@ class ShowSupplyOPS(View):
 
 class AddUser(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         context = {}
         user = request.user
+        context.update({'user': user, 'title': 'Добавление пользователя'})
+
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
+
         form = AddUserForm()
-
-        context.update({'user': user, 'title': 'Добавление пользователя', 'form': form})
-
+        context.update({'form': form})
         return render(request, 'adduser.html', context=context)
+
 
     def post(self, request):
         context = {}
@@ -1112,8 +1155,14 @@ class AddUser(View):
 
 class ShowSupply(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
         user = request.user
         context = {'user': user, 'title': 'Реестр поставок на почтамты'}
+
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
 
         query_supplies = Supply.objects.filter(status_sending=True).order_by('-id')
         headers = ['№<br>поставки', 'Почтамт', 'Отправил', 'Получил', 'Данные поставки', 'Дата отправки', 'Дата приемки', 'Принята']
