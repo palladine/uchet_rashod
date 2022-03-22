@@ -91,7 +91,17 @@ select:focus option {
   color: initial;
 }
 
-.form-control::placeholder{
+input[list='list__datalist_cartridges']::-webkit-calendar-picker-indicator,
+input[list='list__datalist_postoffice']::-webkit-calendar-picker-indicator,
+input[list='list__datalist_supply']::-webkit-calendar-picker-indicator,
+input[list='list__datalist_ops']::-webkit-calendar-picker-indicator,
+input[list='list__datalist_supply_ops']::-webkit-calendar-picker-indicator
+{
+    opacity: 0;
+}
+
+
+.form-control::placeholder {
     color: #909090;
     padding: 0px 3px;
     font-size: 0.75rem;
@@ -289,3 +299,4 @@ th, td {
 .page:hover {
    color:  rgba(26, 188, 156, .8) !important;
 }
+

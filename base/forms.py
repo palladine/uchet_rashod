@@ -8,6 +8,21 @@ from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS
 
 ht = '* Поле обязательное для заполнения'
 
+# Implementation html Datalist
+class DataListWidget(forms.TextInput):
+    def __init__(self, data_list, name, *args, **kwargs):
+        super(DataListWidget, self).__init__(*args, **kwargs)
+        self._name = name
+        self._list = data_list
+        self.attrs.update({'list': 'list__%s' % self._name})
+
+    def render(self, name, value, attrs=None, renderer=None):
+        text_html = super(DataListWidget, self).render(name, value, attrs=attrs)
+        data_list = '<datalist id="list__%s">' % self._name
+        for item in self._list:
+            data_list += f'<option data-value="{item.pk}" value="{item}"></option>'
+        data_list += '</datalist>'
+        return (text_html + data_list)
 
 
 # ---------------  Login custom fields and form ---------------
@@ -167,11 +182,13 @@ class PostofficeField(ModelChoiceField):
 
 class AddSupplyForm(forms.Form):
     postoffice_name = PostofficeField(label='Почтамт',
-                                             queryset=Postoffice.objects.all(),
-                                             help_text=ht, required=True,
-                                             to_field_name='postoffice_name',
-                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                 queryset=Postoffice.objects.all(),
+                                 help_text=ht, required=True,
+                                 to_field_name='postoffice_name',
+                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'},
+                                                       data_list=Postoffice.objects.all(), name='datalist_postoffice'))
 # --------------- End Add Supply ---------------
 
 
@@ -197,19 +214,30 @@ class AmountField(CharField):
 
 class AddPartForm(forms.Form):
     supply = SupplyField(label='Поставка',
-                        queryset=Supply.objects.filter(status_sending=False),
+                        queryset=None,
                         help_text=ht, required=True,
                         to_field_name='pk',
-                        empty_label='ВЫБЕРИТЕ ПОСТАВКУ ...',
-                        widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                        widget=None)
+
     nomenclature_cartridge = NomenclaturePartField(label='Номенклатура картриджа',
-                                                    queryset=Cartridge.objects.all(),
-                                                    help_text=ht, required=True,
-                                                    to_field_name='nomenclature',
-                                                    empty_label='ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
-                                                    widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                                   queryset=None,
+                                                   help_text=ht, required=True,
+                                                   to_field_name='nomenclature',
+                                                   widget=None)
     amount = AmountField(label='Количество', help_text=ht, required=True,
                         widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'КОЛИЧЕСТВО'}))
+
+
+    def __init__(self, *args, **kwargs):
+        super(AddPartForm, self).__init__(*args, **kwargs)
+        self.fields['supply'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                'placeholder': 'ВЫБЕРИТЕ ОПС ...',
+                                                'autocomplete': 'off'},
+                                                   data_list=Supply.objects.filter(status_sending=False),
+                                                   name='datalist_supply')
+        self.fields['nomenclature_cartridge'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                                                'placeholder': 'ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...'},
+                                                                         data_list=Cartridge.objects.all(), name='datalist_cartridges')
 # --------------- End Add Part  ---------------
 
 
@@ -217,11 +245,13 @@ class AddPartForm(forms.Form):
 # ---------------  Show Cartridges custom fields and form ---------------
 class ShowCartridgesForm(forms.Form):
     postoffice_name = PostofficeField(label='Почтамт',
-                                             queryset=Postoffice.objects.all(),
-                                             help_text=ht, required=True,
-                                             to_field_name='postoffice_name',
-                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                 queryset=Postoffice.objects.all(),
+                                 help_text=ht, required=True,
+                                 to_field_name='postoffice_name',
+                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'},
+                                                       data_list=Postoffice.objects.all(), name='datalist_postoffice'))
 # --------------- End Show Cartridges ---------------
 
 
@@ -229,11 +259,13 @@ class ShowCartridgesForm(forms.Form):
 # ---------------  Add OPS custom fields and form ---------------
 class AddOPSForm(forms.Form):
     postoffice_name = PostofficeField(label='Почтамт',
-                                          queryset=Postoffice.objects.all(),
-                                          help_text=ht, required=True,
-                                          to_field_name='postoffice_name',
-                                          empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                          widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                 queryset=Postoffice.objects.all(),
+                                 help_text=ht, required=True,
+                                 to_field_name='postoffice_name',
+                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'},
+                                                       data_list=Postoffice.objects.all(), name='datalist_postoffice'))
     index = IndexField(label='Индекс ОПС', max_length=6, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС ОПС'}))
     address = forms.CharField(label='Адрес ОПС', max_length=255, required=False,
@@ -264,8 +296,9 @@ class AddSupplyOPSForm(forms.Form):
     ops = OPSField(label='ОПС',
                    queryset=None,
                    help_text=ht, required=True,
-                   empty_label='ВЫБЕРИТЕ ОПС ...',
-                   widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                   widget=None)
+
+
     task_naumen = forms.CharField(label='Номер запроса в Naumen', max_length=50, required=False,
                               widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
                                                             'placeholder': 'НОМЕР ЗАПРОСА В NAUMEN',
@@ -273,7 +306,11 @@ class AddSupplyOPSForm(forms.Form):
 
     def __init__(self, po, *args, **kwargs):
         super(AddSupplyOPSForm, self).__init__(*args, **kwargs)
-        self.fields['ops'].queryset = OPS.objects.filter(postoffice=po)
+        #self.fields['ops'].queryset = OPS.objects.filter(postoffice=po)
+        self.fields['ops'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                'placeholder': 'ВЫБЕРИТЕ ОПС ...',
+                                                'autocomplete': 'off'},
+                                         data_list=OPS.objects.filter(postoffice=po), name='datalist_ops')
 # --------------- End Add Supply OPS ---------------
 
 
@@ -286,17 +323,17 @@ class SupplyOPSField(ModelChoiceField):
 
 class AddPartOPSForm(forms.Form):
     supply_ops = SupplyOPSField(label='Поставка на опс',
-                                queryset = None,
+                                queryset=None,
                                 help_text=ht, required=True,
                                 to_field_name='pk',
-                                empty_label='ВЫБЕРИТЕ ПОСТАВКУ ...',
-                                widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                widget=None)
+
     nomenclature_cartridge = NomenclaturePartField(label='Номенклатура картриджа',
-                                                   queryset=Cartridge.objects.all(),
+                                                   queryset=None,
                                                    help_text=ht, required=True,
                                                    to_field_name='nomenclature',
-                                                   empty_label='ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
-                                                   widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                                   widget=None)
+
     amount = AmountField(label='Количество', help_text=ht, required=True,
                          widget=forms.NumberInput(
                              attrs={'class': 'form-control form-control-sm', 'placeholder': 'КОЛИЧЕСТВО'}))
@@ -304,10 +341,20 @@ class AddPartOPSForm(forms.Form):
     def __init__(self, po, *args, **kwargs):
         super(AddPartOPSForm, self).__init__(*args, **kwargs)
         self.fields['supply_ops'].queryset = Supply_OPS.objects.filter(ops_recipient__postoffice=po, status_sending=False)
+        self.fields['supply_ops'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                'placeholder': 'ВЫБЕРИТЕ ПОСТАВКУ ...',
+                                                'autocomplete': 'off'},
+                                                data_list=Supply_OPS.objects.filter(ops_recipient__postoffice=po,
+                                                                             status_sending=False), name='datalist_supply_ops')
 
         cartridges_po = State.objects.filter(postoffice=po, total_amount__gt=0)
         ctr = [c.cartridge.nomenclature for c in cartridges_po]
         self.fields['nomenclature_cartridge'].queryset = Cartridge.objects.filter(nomenclature__in=ctr)
+        self.fields['nomenclature_cartridge'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                'placeholder': 'ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...',
+                                                'autocomplete': 'off'},
+                                                data_list=Cartridge.objects.filter(nomenclature__in=ctr),
+                                                                      name='datalist_cartridges')
 # --------------- End Add Part OPS  ---------------
 
 
@@ -368,11 +415,14 @@ class AddUserForm(forms.Form):
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ОТЧЕСТВО', 'autocomplete': 'off'}))
 
     postoffice = PostofficeField(label='Почтамт',
-                                             queryset=Postoffice.objects.all(),
-                                             help_text=ht, required=True,
-                                             to_field_name='postoffice_name',
-                                             empty_label='ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                             widget=forms.Select(attrs={'class': 'form-select form-select-sm'}))
+                                 queryset=Postoffice.objects.all(),
+                                 help_text=ht, required=True,
+                                 to_field_name='postoffice_name',
+                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'},
+                                                       data_list=Postoffice.objects.all(), name='datalist_postoffice'))
+
     email = AddUserEmailField(label='E-mail', max_length=255, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'E-MAIL', 'autocomplete': 'off'}))
 # --------------- End Add User ---------------

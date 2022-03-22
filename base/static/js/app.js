@@ -38,5 +38,23 @@ function() {
         });
     //////////////////////////////////
 
+    // Datalist change values
+    const els = document.querySelectorAll('.datalist');
+    for (let i = 0; i < els.length; i++){
+        els[i].addEventListener('change', function(e){
+            var id = e.target.id;
+            var form_id = e.target.form.id;
+            var list = e.target.getAttribute('list');
+            var new_val = document.querySelector("#" + list + " option[value='" + e.target.value + "']").dataset.value;
+            var new_input = document.createElement('input');
+            new_input.setAttribute('type', 'hidden');
+            new_input.setAttribute('name', 'new_'+e.target.name)
+            new_input.setAttribute('value', new_val);
+            document.getElementById(form_id).appendChild(new_input);
+	    });
+	}
+
+
+
 
 });

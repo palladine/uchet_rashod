@@ -420,7 +420,8 @@ class AddSupply(View):
 
         if 'but_part' in request.POST:
             if form_part.is_valid():
-                id_supply = request.POST.get('supply')
+                # id_supply = request.POST.get('supply')
+                id_supply = request.POST.get('new_supply')
                 supply = Supply.objects.get(pk=id_supply)
 
                 nomenclature = request.POST.get('nomenclature_cartridge')
@@ -668,6 +669,7 @@ class ShowCartridges(View):
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
+            states.sort()
 
         if user.role == '1':
             form = ShowCartridgesForm()
@@ -695,6 +697,7 @@ class ShowCartridges(View):
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
+            states.sort()
 
             request.session['states'] = states
             request.session['postoffice'] = postoffice_name
@@ -728,7 +731,7 @@ class ShowNomenclatures(View):
         if user.role == '2':
             context.update({'num_active_supplies': request.session['num_active_supplies']})
 
-        cartridges = Cartridge.objects.all()
+        cartridges = Cartridge.objects.all().order_by('nomenclature')
 
         # pagination
         page = request.GET.get('page', 1)
@@ -832,7 +835,8 @@ class AddSupplyOPS(View):
 
         if 'but_supply' in request.POST:
             if form_supply_ops.is_valid():
-                ops = request.POST.get('ops')
+                #ops = request.POST.get('ops')
+                ops = request.POST.get('new_ops')
                 task_naumen = request.POST.get('task_naumen')
                 ops_obj = OPS.objects.get(pk=ops)
                 # save supply_ops
@@ -848,7 +852,8 @@ class AddSupplyOPS(View):
 
         if 'but_part' in request.POST:
             if form_part_ops.is_valid():
-                id_supply = request.POST.get('supply_ops')
+                # id_supply = request.POST.get('supply_ops')
+                id_supply = request.POST.get('new_supply_ops')
                 supply_obj = Supply_OPS.objects.get(pk=id_supply)
 
                 nomenclature = request.POST.get('nomenclature_cartridge')
