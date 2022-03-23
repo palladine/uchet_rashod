@@ -231,7 +231,7 @@ class AddPartForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(AddPartForm, self).__init__(*args, **kwargs)
         self.fields['supply'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
-                                                'placeholder': 'ВЫБЕРИТЕ ОПС ...',
+                                                'placeholder': 'ВЫБЕРИТЕ ПОСТАВКУ ...',
                                                 'autocomplete': 'off'},
                                                    data_list=Supply.objects.filter(status_sending=False),
                                                    name='datalist_supply')
