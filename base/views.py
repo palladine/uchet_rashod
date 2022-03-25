@@ -198,12 +198,17 @@ class AddOPS(View):
 
                 # save
                 postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
+                # ops = OPS(postoffice=postoffice, index=index, address=address)
 
-                ops = OPS(postoffice=postoffice, index=index, address=address)
-                ops.save()
-                messages.success(request, 'ОПС добавлено', extra_tags='single_ops')
-
-                return HttpResponseRedirect(reverse('add_ops'))
+                ops, created_ops = OPS.objects.get_or_create(index=index)
+                if created_ops:
+                    ops.postoffice = postoffice
+                    ops.address = address
+                    ops.save()
+                    messages.success(request, 'ОПС добавлено', extra_tags='single_ops')
+                    return HttpResponseRedirect(reverse('add_ops'))
+                else:
+                    messages.error(request, "ОПС с таким индексом уже зарегистрировано", extra_tags='single_ops')
 
             else:
                 messages.error(request, get_errors_form(form_ops), extra_tags='single_ops')
