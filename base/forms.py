@@ -3,24 +3,29 @@ from django import forms
 from django.forms import CharField, FileField, ModelChoiceField, EmailField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS
+from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS, Group
 
 
 ht = '* Поле обязательное для заполнения'
 
 # Implementation html Datalist
 class DataListWidget(forms.TextInput):
-    def __init__(self, data_list, name, *args, **kwargs):
+    def __init__(self, data_list, name, *args, user=None, **kwargs):
         super(DataListWidget, self).__init__(*args, **kwargs)
         self._name = name
         self._list = data_list
         self.attrs.update({'list': 'list__%s' % self._name})
+        self.user = user
 
     def render(self, name, value, attrs=None, renderer=None):
         text_html = super(DataListWidget, self).render(name, value, attrs=attrs)
         data_list = '<datalist id="list__%s">' % self._name
+
         for item in self._list:
-            data_list += f'<option data-value="{item.pk}" value="{item}"></option>'
+            if self.user and self.user.is_staff:
+                data_list += f'<option data-value="{item.pk}" value="{item.postoffice_name} ({item.group})"></option>'
+            else:
+                data_list += f'<option data-value="{item.pk}" value="{item}"></option>'
         data_list += '</datalist>'
         return (text_html + data_list)
 
@@ -47,6 +52,26 @@ class LoginForm(forms.Form):
     password = PasswordField(label='Пароль',
                                widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПАРОЛЬ'}))
 # --------------- End Login ---------------
+
+
+
+# ---------------  Add Group custom fields and form ---------------
+class GroupNameField(CharField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ИМЯ ГРУППЫ" обязательное для заполнения'), code='empty')
+
+        query_unique = Group.objects.filter(group_name=value).exists()
+        if query_unique:
+            raise ValidationError(('Группа с именем "{}" уже зарегистрирован. Введите другое имя'.format(value)), code='unique')
+
+
+class AddGroupForm(forms.Form):
+    group_name = GroupNameField(label='Группа', max_length=255, help_text=ht, required=True,
+                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
+                                                      'placeholder': 'ИМЯ ГРУППЫ', 'autocomplete': 'off'}))
+# --------------- End Add Group ---------------
 
 
 
@@ -77,11 +102,48 @@ class IndexField(CharField):
 
 class AddPostofficeForm(forms.Form):
     postoffice_name = PostofficeNameField(label='Почтамт', max_length=100, help_text=ht, required=True,
-                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПОЧТАМТ'}))
+                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
+                                                      'placeholder': 'ПОЧТАМТ',
+                                                      'autocomplete': 'off'}))
     index = IndexField(label='Индекс', max_length=6, required=False,
                         widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС'}))
     address = forms.CharField(label='Адрес', max_length=255, required=False,
                             widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'АДРЕС'}))
+
+
+
+class AddGroupField(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            raise ValidationError(('Поле "ИМЯ ГРУППЫ" обязательное для заполнения'), code='empty')
+
+
+class AddPostofficeGroupForm(forms.Form):
+    group = AddGroupField(label='Группа',
+                                 queryset=None,
+                                 help_text=ht, required=True,
+                                 to_field_name='group_name',
+                                 widget=None)
+
+    postoffice_name = PostofficeNameField(label='Почтамт', max_length=100, help_text=ht, required=True,
+                                          widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
+                                                                        'placeholder': 'ПОЧТАМТ',
+                                                                        'autocomplete': 'off'}))
+    index = IndexField(label='Индекс', max_length=6, required=False,
+                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС'}))
+    address = forms.CharField(label='Адрес', max_length=255, required=False,
+                              widget=forms.TextInput(
+                                  attrs={'class': 'form-control form-control-sm', 'placeholder': 'АДРЕС'}))
+
+    def __init__(self, *args, **kwargs):
+        super(AddPostofficeGroupForm, self).__init__(*args, **kwargs)
+
+        self.fields['group'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                                 'placeholder': 'ВЫБЕРИТЕ ГРУППУ ...',
+                                                                 'autocomplete': 'off'},
+                                                     data_list=Group.objects.all().order_by('group_name'),
+                                                          name='datalist_group')
 # --------------- End Add Postoffice ---------------
 
 
@@ -185,10 +247,17 @@ class AddSupplyForm(forms.Form):
                                  queryset=None,
                                  help_text=ht, required=True,
                                  to_field_name='postoffice_name',
-                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                 widget=None)
+
+    def __init__(self, user, *args, **kwargs):
+        super(AddSupplyForm, self).__init__(*args, **kwargs)
+
+        qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+
+        self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                               'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                                              'autocomplete': 'off'},
-                                                       data_list=Postoffice.objects.all().order_by('postoffice_name'), name='datalist_postoffice'))
+                                                              'autocomplete': 'off'}, data_list=qs,
+                                                               name='datalist_postoffice')
 # --------------- End Add Supply ---------------
 
 
@@ -228,13 +297,16 @@ class AddPartForm(forms.Form):
                         widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'КОЛИЧЕСТВО'}))
 
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user, *args, **kwargs):
         super(AddPartForm, self).__init__(*args, **kwargs)
+
+        postoffices = Postoffice.objects.filter(group=user.group)
+        postoffices_names = [name.postoffice_name for name in postoffices]
+        qs = Supply.objects.filter(status_sending=False, postoffice_recipient__in=postoffices_names).order_by('-id')
+
         self.fields['supply'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                 'placeholder': 'ВЫБЕРИТЕ ПОСТАВКУ ...',
-                                                'autocomplete': 'off'},
-                                                   data_list=Supply.objects.filter(status_sending=False).order_by('-id'),
-                                                   name='datalist_supply')
+                                                'autocomplete': 'off'}, data_list=qs, name='datalist_supply')
         self.fields['nomenclature_cartridge'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                                                 'placeholder': 'ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...'},
                                                                          data_list=Cartridge.objects.all().order_by('nomenclature'),
@@ -246,13 +318,24 @@ class AddPartForm(forms.Form):
 # ---------------  Show Cartridges custom fields and form ---------------
 class ShowCartridgesForm(forms.Form):
     postoffice_name = PostofficeField(label='Почтамт',
-                                 queryset=Postoffice.objects.all(),
+                                 queryset=None,
                                  help_text=ht, required=True,
                                  to_field_name='postoffice_name',
-                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                 widget=None)
+
+    def __init__(self, user, *args, **kwargs):
+        super(ShowCartridgesForm, self).__init__(*args, **kwargs)
+
+        qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+        if user.is_staff:
+            qs = Postoffice.objects.all().order_by('postoffice_name')
+
+        self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                               'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                                              'autocomplete': 'off'},
-                                                       data_list=Postoffice.objects.all().order_by('postoffice_name'), name='datalist_postoffice'))
+                                                              'autocomplete': 'off'}, data_list=qs,
+                                                               name='datalist_postoffice')
+
+
 # --------------- End Show Cartridges ---------------
 
 
@@ -260,17 +343,24 @@ class ShowCartridgesForm(forms.Form):
 # ---------------  Add OPS custom fields and form ---------------
 class AddOPSForm(forms.Form):
     postoffice_name = PostofficeField(label='Почтамт',
-                                 queryset=Postoffice.objects.all(),
+                                 queryset=None,
                                  help_text=ht, required=True,
                                  to_field_name='postoffice_name',
-                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
-                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                                              'autocomplete': 'off'},
-                                                       data_list=Postoffice.objects.all().order_by('postoffice_name'), name='datalist_postoffice'))
+                                 widget=None)
     index = IndexField(label='Индекс ОПС', max_length=6, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС ОПС'}))
     address = forms.CharField(label='Адрес ОПС', max_length=255, required=False,
                               widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'АДРЕС ОПС'}))
+
+    def __init__(self, user, *args, **kwargs):
+        super(AddOPSForm, self).__init__(*args, **kwargs)
+        qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+        if user.is_staff:
+            qs = Postoffice.objects.all().order_by('postoffice_name')
+        self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'},
+                                                       data_list=qs, name='datalist_postoffice')
 # --------------- End Add OPS ---------------
 
 
@@ -307,7 +397,6 @@ class AddSupplyOPSForm(forms.Form):
 
     def __init__(self, po, *args, **kwargs):
         super(AddSupplyOPSForm, self).__init__(*args, **kwargs)
-        #self.fields['ops'].queryset = OPS.objects.filter(postoffice=po)
         self.fields['ops'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                 'placeholder': 'ВЫБЕРИТЕ ОПС ...',
                                                 'autocomplete': 'off'},
@@ -359,6 +448,7 @@ class AddPartOPSForm(forms.Form):
 # --------------- End Add Part OPS  ---------------
 
 
+
 # ---------------  Add User custom fields and form ---------------
 class AddUserLoginField(CharField):
     # Validation
@@ -398,6 +488,7 @@ class AddUserEmailField(EmailField):
         result = validate_email(value)
 
 
+
 class AddUserForm(forms.Form):
     login = AddUserLoginField(label='Имя пользователя',
                        max_length=100, help_text=ht, required=True,
@@ -415,17 +506,48 @@ class AddUserForm(forms.Form):
     middlename = AddUserMiddlenameField(label='Отчество', max_length=100, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ОТЧЕСТВО', 'autocomplete': 'off'}))
 
+
     postoffice = PostofficeField(label='Почтамт',
-                                 queryset=Postoffice.objects.all(),
+                                 queryset=None,
                                  help_text=ht, required=True,
                                  to_field_name='postoffice_name',
-                                 widget=DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
-                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
-                                                              'autocomplete': 'off'},
-                                                       data_list=Postoffice.objects.all().order_by('postoffice_name'), name='datalist_postoffice'))
+                                 widget=None)
 
     email = AddUserEmailField(label='E-mail', max_length=255, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'E-MAIL', 'autocomplete': 'off'}))
+
+
+    def __init__(self, user, *args, **kwargs):
+        super(AddUserForm, self).__init__(*args, **kwargs)
+
+        if user.is_staff:
+            qs = Postoffice.objects.all().order_by('group__group_name')
+        else:
+
+            qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+
+        self.fields['postoffice'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'}, data_list=qs,
+                                                          name='datalist_postoffice', user=user)
 # --------------- End Add User ---------------
 
 
+
+# --------------- Show OPS form ---------------
+class ShowOPSForm(forms.Form):
+    group = AddGroupField(label='Группа',
+                          queryset=None,
+                          help_text=ht, required=True,
+                          to_field_name='group_name',
+                          widget=None)
+
+    def __init__(self, *args, **kwargs):
+        super(ShowOPSForm, self).__init__(*args, **kwargs)
+
+        self.fields['group'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                            'placeholder': 'ВЫБЕРИТЕ ГРУППУ ...',
+                                                            'autocomplete': 'off'},
+                                                     data_list=Group.objects.all().order_by('group_name'),
+                                                     name='datalist_group')
+# --------------- End Show OPS form ---------------

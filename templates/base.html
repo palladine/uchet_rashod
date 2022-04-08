@@ -25,21 +25,31 @@
     <nav class="navbar navbar-light head">
         <div class="container-fluid">
                         <div class="row" style="flex-grow: 1">
-                                        <div class="col-7 my-auto">
+                                        <div class="col-5 my-auto">
                                             <a class="navbar-brand" href="{% url 'main' %}">СЕРВИС УЧЕТА РАСХОДНЫХ МАТЕРИАЛОВ</a>
                                         </div>
 
 
-                                        <div class="col-4">
+                                        <div class="col-6">
                                             <div class="row">
                                                 <div class="col-12 d-flex justify-content-end">
-                                                    <b>{{ user }}</b>&nbsp &nbsp({{ user.get_role_display }})
+                                                    {% if user.is_staff %}
+                                                        <b>{{ user }}</b>&nbsp &nbsp(<div class="root">{{ user.get_role_display }}</div>)
+                                                    {% else %}
+                                                        <b>{{ user }}</b>&nbsp &nbsp({{ user.get_role_display }})
+                                                    {% endif %}
                                                 </div>
                                             </div>
 
                                             <div class="row">
                                                 <div class="col-12 d-flex justify-content-end">
-                                                     {{ user.postoffice_id }}&nbsp &nbsp &nbsp[{{ user.postoffice_id.index }}, {{ user.postoffice_id.address }}]
+                                                    {{ user.group }}
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-12 d-flex justify-content-end">
+                                                    {{ user.postoffice_id }} &nbsp [{{ user.postoffice_id.index }}, {{ user.postoffice_id.address }}]
                                                 </div>
                                             </div>
                                         </div>
@@ -67,6 +77,7 @@
 
                         {% if user.is_staff %}
                             <a class="nav-link text-uppercase" href="/../admin">Панель администратора</a>
+                            <a class="nav-link text-uppercase" href="{% url 'add_group' %}">Добавить группу</a>
                             <hr>
                         {% endif %}
 

@@ -38,6 +38,7 @@ function() {
         });
     //////////////////////////////////
 
+
     // Datalist change values
     const els = document.querySelectorAll('.datalist');
     for (let i = 0; i < els.length; i++){
@@ -53,8 +54,5 @@ function() {
             document.getElementById(form_id).appendChild(new_input);
 	    });
 	}
-
-
-
 
 });

@@ -9,6 +9,17 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class Group(BaseModel):
+    group_name = models.CharField(max_length=255, null=False, blank=False, unique=True, verbose_name="Группа")
+
+    class Meta:
+        verbose_name = "Группа"
+        verbose_name_plural = "Группы"
+
+    def __str__(self):
+        return "{0}".format(self.group_name)
+
+
 
 class User(AbstractUser, BaseModel):
     username = models.CharField(max_length=50, null=False, blank=False, unique=True, verbose_name="Имя пользователя")
@@ -20,6 +31,7 @@ class User(AbstractUser, BaseModel):
     postoffice_id = models.ForeignKey("Postoffice", null=True, blank=False, on_delete=models.SET_NULL, verbose_name="Почтамт")
     date_joined = models.DateTimeField(auto_now_add=True, null=False, blank=False, verbose_name="Дата регистрации")
     last_login = models.DateTimeField(null=True, blank=False, verbose_name="Дата последнего входа")
+    group = models.ForeignKey("Group", null=True, blank=False, on_delete=models.SET_NULL, verbose_name="Группа")
 
     roles = (
         ('1', 'Администратор'),
@@ -40,6 +52,7 @@ class Postoffice(BaseModel):
     postoffice_name = models.CharField(max_length=75, unique=True, null=False, blank=False, verbose_name="Почтамт")
     index = models.CharField(max_length=6, null=True, blank=True, default='', verbose_name="Индекс")
     address = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name="Адрес")
+    group = models.ForeignKey("Group", null=True, blank=False, on_delete=models.SET_NULL, verbose_name="Группа")
 
     class Meta:
         verbose_name = "Почтамт"
@@ -135,11 +148,11 @@ class Supply_OPS(BaseModel):
         verbose_name_plural = "Поставка ОПС"
 
     def __str__(self):
-        return "Поствка №{0} (на ОПС {1})".format(self.pk, self.ops_recipient.index)
+        return "Поставка №{0} (на ОПС {1})".format(self.pk, self.ops_recipient.index)
 
 
 class Part_OPS(BaseModel):
-    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Поставка")
+    id_supply_ops = models.ForeignKey('Supply_OPS', null=True, blank=False, on_delete=models.CASCADE, verbose_name="Поставка")
     cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
     amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
 

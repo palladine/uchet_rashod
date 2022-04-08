@@ -1,21 +1,26 @@
 from django.contrib import admin
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act
+from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group
 from django.contrib.auth.admin import UserAdmin
+
+
+class ShowGroupAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'group_name']
+
 
 
 class ShowUserAdmin(UserAdmin):
     list_display = ['pk', 'username', 'email', 'last_name',
-                    'first_name', 'middle_name', 'postoffice_id', 'role',
+                    'first_name', 'middle_name', 'group', 'postoffice_id', 'role',
                     'last_login', 'date_joined', 'is_staff', 'is_active']
     readonly_fields = ["date_joined"]
     UserAdmin.fieldsets = ((None, {'fields': ('username', 'password', 'email', 'last_name',
-                    'first_name', 'middle_name', 'postoffice_id', 'role',
+                    'first_name', 'middle_name', 'group', 'postoffice_id', 'role',
                     'last_login', 'date_joined', 'is_staff', 'is_active')}),)
 
 
 
 class ShowPostofficeAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'postoffice_name', 'index', 'address']
+    list_display = ['pk', 'postoffice_name', 'index', 'address', 'group']
 
 
 class ShowCartridgeAdmin(admin.ModelAdmin):
@@ -54,7 +59,7 @@ class ShowActAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Act._meta.get_fields()]
 
 
-
+admin.site.register(Group, ShowGroupAdmin)
 admin.site.register(User, ShowUserAdmin)
 admin.site.register(Postoffice, ShowPostofficeAdmin)
 admin.site.register(Cartridge, ShowCartridgeAdmin)

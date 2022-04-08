@@ -10,52 +10,12 @@
                     <h4 class="card-header text-uppercase">{{ title }}</h4>
 
                     <div class="card-body d-flex justify-content-center">
-                        <form action="{% url 'add_user' %}" method="post" class="col-11" novalidate>
+                        <form action="{% url 'add_group' %}" method="post" class="col-11" novalidate>
                             {% csrf_token %}
 
                             <div class="mb-3">
-                                {{ form.login }}
-                                <p class="ht">{{ form.login.help_text }}</p>
-                            </div>
-
-
-                            <div class="mb-3">
-                                {{ form.password }}
-                                <p class="ht">{{ form.password.help_text }}</p>
-                            </div>
-
-
-                            <div class="mb-3">
-                                {{ form.lastname }}
-                                <p class="ht">{{ form.lastname.help_text }}</p>
-                            </div>
-
-
-                            <div class="mb-3">
-                                {{ form.firstname }}
-                                <p class="ht">{{ form.firstname.help_text }}</p>
-                            </div>
-
-
-                            <div class="mb-3">
-                                {{ form.middlename }}
-                                <p class="ht">{{ form.middlename.help_text }}</p>
-                            </div>
-
-                            <div class="mb-3">
-                                {{ form.group }}
-                                <p class="ht">{{ form.group.help_text }}</p>
-                            </div>
-
-                            <div class="mb-3">
-                                {{ form.postoffice }}
-                                <p class="ht">{{ form.postoffice.help_text }}</p>
-                            </div>
-
-
-                            <div class="mb-4">
-                                {{ form.email }}
-                                <p class="ht">{{ form.email.help_text }}</p>
+                                {{ form.group_name }}
+                                <p class="ht">{{ form.group_name.help_text }}</p>
                             </div>
 
                             <button class="btn btn-outline-primary btn-sm col-12 shadow-none" type="submit">

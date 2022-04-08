@@ -1,10 +1,12 @@
 from django.urls import path
 from .views import (Main, AddPostoffice, AddCartridge, AddSupply, ApplySupply,
                     ShowCartridges, ShowUsers, ShowNomenclatures, AddOPS, ShowOPS,
-                    AddSupplyOPS, ShowSupplyOPS, AddUser, ShowSupply)
+                    AddSupplyOPS, ShowSupplyOPS, AddUser, ShowSupply, AddGroup)
 
 urlpatterns = [
+    path('', Main.as_view(), name='main'),
     path('main', Main.as_view(), name='main'),
+    path('add_group', AddGroup.as_view(), name='add_group'),
     path('add_user', AddUser.as_view(), name='add_user'),
     path('add_postoffice', AddPostoffice.as_view(), name='add_postoffice'),
     path('add_cartridge', AddCartridge.as_view(), name='add_cartridge'),
