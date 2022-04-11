@@ -278,7 +278,8 @@ class AddOPS(View):
                     postoffice = None
                     # admin
                     if user.role == '1':
-                        postoffice = Postoffice.objects.filter(postoffice_name=postoffice_name).first()
+                        postoffice = Postoffice.objects.filter(postoffice_name=postoffice_name, group=user.group).first()
+
 
                     # user
                     if user.role == '2':
@@ -900,7 +901,8 @@ class AddSupplyOPS(View):
         form_supply_ops = AddSupplyOPSForm(postoffice)
         form_part_ops = AddPartOPSForm(postoffice)
 
-        supplies_ops = Supply_OPS.objects.filter(status_sending=False)
+        qops = OPS.objects.filter(postoffice=postoffice)
+        supplies_ops = Supply_OPS.objects.filter(status_sending=False, ops_recipient__in=qops)
         active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops=k.pk).count() > 0]
         ids = [i.pk for i in active_supplies]
         all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops=p)) for p in ids]
@@ -1047,7 +1049,8 @@ class AddSupplyOPS(View):
             supply_obj.delete()
             return HttpResponseRedirect(reverse('add_supply_ops'))
 
-        supplies_ops = Supply_OPS.objects.filter(status_sending=False)
+        qops = OPS.objects.filter(postoffice=postoffice)
+        supplies_ops = Supply_OPS.objects.filter(status_sending=False, ops_recipient__in=qops)
         active_supplies = [k for k in supplies_ops if Part_OPS.objects.filter(id_supply_ops__pk=k.pk).count() > 0]
         ids = [i.pk for i in active_supplies]
         all_sup_wparts = [(Supply_OPS.objects.get(pk=p), Part_OPS.objects.filter(id_supply_ops__pk=p)) for p in ids]

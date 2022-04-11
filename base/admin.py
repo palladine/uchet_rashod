@@ -11,11 +11,11 @@ class ShowGroupAdmin(admin.ModelAdmin):
 class ShowUserAdmin(UserAdmin):
     list_display = ['pk', 'username', 'email', 'last_name',
                     'first_name', 'middle_name', 'group', 'postoffice_id', 'role',
-                    'last_login', 'date_joined', 'is_staff', 'is_active']
+                    'last_login', 'date_joined', 'is_staff', 'is_active', 'is_superuser']
     readonly_fields = ["date_joined"]
     UserAdmin.fieldsets = ((None, {'fields': ('username', 'password', 'email', 'last_name',
                     'first_name', 'middle_name', 'group', 'postoffice_id', 'role',
-                    'last_login', 'date_joined', 'is_staff', 'is_active')}),)
+                    'last_login', 'date_joined', 'is_staff', 'is_active', 'is_superuser')}),)
 
 
 
