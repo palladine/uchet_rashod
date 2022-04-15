@@ -91,13 +91,14 @@
                             <hr>
 
 
-                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Картриджи на почтамте (таблица)</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамтах</a>
 
                         {% if user.role == '1' %}
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_supply' %}">Реестр поставок на почтамты</a>
                             <hr>
-                            <a class="nav-link text-uppercase" href="{% url 'show_users' %}">Зарегистрированные пользователи (таблица)</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_users' %}">Зарегистрированные пользователи</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_nomenclatures' %}">Зарегистрированные номенклатуры картриджей</a>
                         {% endif %}
 
 
@@ -114,8 +115,7 @@
                             <hr>
                         {% endif %}
 
-                            <a class="nav-link text-uppercase" href="{% url 'show_nomenclatures' %}">Зарегистрированные номенклатуры картриджей (таблица)</a>
-                            <a class="nav-link text-uppercase" href="{% url 'show_ops' %}">Список ОПС (таблица)</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_ops' %}">Список ОПС</a>
 
 
                     </nav>

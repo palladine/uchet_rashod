@@ -3,6 +3,7 @@
 .git
 .idea
 __pycache__
+/api/migrations
 /base/migrations
 /base/static/misc/acts
 /static
