@@ -13,20 +13,24 @@ class RespInfo(View):
     @method_decorator(csrf_exempt)
     def dispatch(self, request):
         if request.method == 'POST':
-            return self.post(request)
+            try:
+                return self.post(request)
+            except:
+                return JsonResponse(self.form_error(721))
         else:
             return JsonResponse(self.form_error(701))
 
     def post(self, request):
         name_method = json.loads(request.body).get('method')
         data = json.loads(request.body).get('data')
+
         if not name_method:
-            return JsonResponse(self.form_error(711))
+            return JsonResponse(self.form_error(702))
 
         try:
             resp, par = getattr(methods, name_method)(data)
         except Exception:
-            return JsonResponse(self.form_error(702))
+            return JsonResponse(self.form_error(703))
 
         # проверка на ошибки в методах
         if 'code' in resp:

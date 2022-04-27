@@ -64,33 +64,33 @@
 
                     <div class="row">
                         <div class="col"></div>
-                        <div class="col-8 d-flex justify-content-center">
+                        <div class="col-7 d-flex justify-content-center">
                             {% if ops_all %}
                             <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
                                 <thead>
                                     <tr>
-                                            <th>Индекс</th>
-                                            <th>Адрес</th>
+                                            <th class="td_number">Индекс</th>
+                                            <th class="td_info">Адрес</th>
                                             {% if user.role == '1' %}
-                                                <th>Почтамт</th>
+                                                <th class="td_postoffice">Почтамт</th>
                                             {% endif %}
 
                                             {% if user.is_staff %}
-                                                <th>Группа</th>
+                                                <th class="td_info">Группа</th>
                                             {% endif %}
                                     </tr>
                                 </thead>
                                 <tbody>
                                    {% for ops in ops_all %}
                                         <tr>
-                                            <td>{{ ops.index }}</td>
-                                            <td>{{ ops.address }}</td>
+                                            <td class="td_number">{{ ops.index }}</td>
+                                            <td class="td_info">{{ ops.address }}</td>
                                             {% if user.role == '1' %}
-                                                <td>{{ ops.postoffice.postoffice_name }}</td>
+                                                <td class="td_postoffice">{{ ops.postoffice.postoffice_name }}</td>
                                             {% endif %}
 
                                             {% if user.is_staff %}
-                                                <td>{{ ops.postoffice.group }}</td>
+                                                <td class="td_info">{{ ops.postoffice.group }}</td>
                                             {% endif %}
                                         </tr>
                                    {% endfor %}

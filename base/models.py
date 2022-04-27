@@ -59,7 +59,7 @@ class Postoffice(BaseModel):
         verbose_name_plural = "Почтамты"
 
     def __str__(self):
-        return "{}".format(self.postoffice_name)
+        return "{0}".format(self.postoffice_name)
 
 
 class Cartridge(BaseModel):

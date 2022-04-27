@@ -1,6 +1,6 @@
 import os.path
 from django import forms
-from django.forms import CharField, FileField, ModelChoiceField, EmailField
+from django.forms import CharField, FileField, ModelChoiceField, EmailField, DateField, DateInput
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from .models import User, Cartridge, Postoffice, State,  Supply, OPS, Supply_OPS, Group
@@ -23,7 +23,7 @@ class DataListWidget(forms.TextInput):
 
         for item in self._list:
             if self.user and self.user.is_staff:
-                data_list += f'<option data-value="{item.pk}" value="{item.postoffice_name} ({item.group})"></option>'
+                data_list += f'<option data-value="{item.pk}" value="{item} [{item.group}]"></option>'
             else:
                 data_list += f'<option data-value="{item.pk}" value="{item}"></option>'
         data_list += '</datalist>'
@@ -107,7 +107,7 @@ class AddPostofficeForm(forms.Form):
                                                       'autocomplete': 'off'}))
     index = IndexField(label='Индекс', max_length=6, required=False,
                         widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИНДЕКС'}))
-    address = forms.CharField(label='Адрес', max_length=255, required=False,
+    address = CharField(label='Адрес', max_length=255, required=False,
                             widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'АДРЕС'}))
 
 
@@ -257,7 +257,7 @@ class AddSupplyForm(forms.Form):
         self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                               'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
                                                               'autocomplete': 'off'}, data_list=qs,
-                                                               name='datalist_postoffice')
+                                                               name='datalist_postoffice', user=user)
 # --------------- End Add Supply ---------------
 
 
@@ -326,14 +326,15 @@ class ShowCartridgesForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
         super(ShowCartridgesForm, self).__init__(*args, **kwargs)
 
-        qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
         if user.is_staff:
-            qs = Postoffice.objects.all().order_by('postoffice_name')
+            qs = Postoffice.objects.all().order_by('group__group_name')
+        else:
+            qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
 
         self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                               'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
                                                               'autocomplete': 'off'}, data_list=qs,
-                                                               name='datalist_postoffice')
+                                                               name='datalist_postoffice', user=user)
 
 
 # --------------- End Show Cartridges ---------------
@@ -354,13 +355,15 @@ class AddOPSForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super(AddOPSForm, self).__init__(*args, **kwargs)
-        qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+
         if user.is_staff:
-            qs = Postoffice.objects.all().order_by('postoffice_name')
+            qs = Postoffice.objects.all().order_by('group__group_name')
+        else:
+            qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
         self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                               'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
                                                               'autocomplete': 'off'},
-                                                       data_list=qs, name='datalist_postoffice')
+                                                       data_list=qs, name='datalist_postoffice', user=user)
 # --------------- End Add OPS ---------------
 
 
@@ -523,7 +526,6 @@ class AddUserForm(forms.Form):
         if user.is_staff:
             qs = Postoffice.objects.all().order_by('group__group_name')
         else:
-
             qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
 
         self.fields['postoffice'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
@@ -551,3 +553,77 @@ class ShowOPSForm(forms.Form):
                                                      data_list=Group.objects.all().order_by('group_name'),
                                                      name='datalist_group')
 # --------------- End Show OPS form ---------------
+
+
+
+# --------------- Show Refuse form ---------------
+class PostofficeFieldEmpty(ModelChoiceField):
+    # Validation
+    def clean(self, value):
+        if not value:
+            #raise ValidationError(('Поле "ПОЧТАМТ" обязательное для заполнения'), code='empty')
+            return value
+
+
+class ShowRefuseForm(forms.Form):
+    postoffice = PostofficeFieldEmpty(label='Почтамт',
+                                 queryset=Postoffice.objects.none(),
+                                 help_text=ht, required=False,
+                                 to_field_name='postoffice_name',
+                                 widget=None)
+
+    date_s = DateField(label="C", required=False,
+                       widget=DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm',
+                                               'placeholder': 'ДАТА С ...',
+                                               'min': "2022-01-01",
+                                                'max': "2099-01-01"}), localize=True)
+
+    date_p = DateField(label="По", required=False,
+                       widget=DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm',
+                                               'placeholder': 'ДАТА ПО ...',
+                                               'min': "2022-01-01",
+                                               'max': "2099-01-01"}), localize=True)
+
+    def __init__(self, user, *args, **kwargs):
+        super(ShowRefuseForm, self).__init__(*args, **kwargs)
+
+        if user.is_staff:
+            qs = Postoffice.objects.all().order_by('group__group_name')
+        else:
+            qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+
+        self.fields['postoffice'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'}, data_list=qs,
+                                                          name='datalist_postoffice', user=user)
+
+
+
+    # def clean_postoffice(self):
+    #     postoffice_name = self.cleaned_data['postoffice']
+    #
+    #     print('!!!!!!! ', postoffice_name)
+    #
+    #     return postoffice_name
+
+
+
+
+# --------------- End Show Refuse form ---------------
+
+
+
+# --------------- Show Refuse form User ---------------
+class ShowRefuseFormUser(forms.Form):
+    date_s = DateField(label="C", required=False,
+                       widget=DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm',
+                                               'placeholder': 'ДАТА С ...',
+                                               'min': "2022-01-01",
+                                               'max': "2099-01-01"}), localize=True)
+
+    date_p = DateField(label="По", required=False,
+                       widget=DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm',
+                                               'placeholder': 'ДАТА ПО ...',
+                                               'min': "2022-01-01",
+                                               'max': "2099-01-01"}), localize=True)
+# --------------- End Show Refuse form User ---------------

@@ -17,7 +17,7 @@
 
                     <div class="row">
                         <div class="col"></div>
-                        <div class="col-8 d-flex justify-content-center">
+                        <div class="col-11 d-flex justify-content-center">
                             <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
                                 <thead>
                                     <tr>
@@ -30,13 +30,13 @@
                                 <tbody>
                                    {% for supply in supplies %}
                                         <tr>
-                                            <td>{{ supply.0 }}</td>
-                                            <td>{{ supply.1 }}</td>
-                                            <td>{{ supply.2|safe }}</td>
-                                            <td>{{ supply.3|safe }}</td>
-                                            <td>{{ supply.4|safe|truncatewords:5 }}</td>
-                                            <td>{{ supply.5 }}</td>
-                                            <td>{{ supply.6 }}</td>
+                                            <td class="td_number">{{ supply.0 }}</td>
+                                            <td class="td_postoffice">{{ supply.1 }}</td>
+                                            <td class="td_fio">{{ supply.2|safe }}</td>
+                                            <td class="td_fio">{{ supply.3|safe }}</td>
+                                            <td class="">{{ supply.4|safe|truncatewords:5 }}</td>
+                                            <td class="td_date">{{ supply.5 }}</td>
+                                            <td class="td_date">{{ supply.6 }}</td>
                                             <td class="td_act">
                                                 {% if supply.7 %}
                                                     <i class="fa fa-check"></i>

@@ -91,11 +91,12 @@
                             <hr>
 
 
-                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамтах</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамте</a>
 
                         {% if user.role == '1' %}
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_supply' %}">Реестр поставок на почтамты</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_refuse' %}">Реестр списанных картриджей</a>
                             <hr>
                             <a class="nav-link text-uppercase" href="{% url 'show_users' %}">Зарегистрированные пользователи</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_nomenclatures' %}">Зарегистрированные номенклатуры картриджей</a>
@@ -112,6 +113,7 @@
                             </a>
                             <a class="nav-link text-uppercase" href="{% url 'add_supply_ops' %}">Выдача картриджей ОПС</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_supply_ops' %}">Реестр поставок на ОПС</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_refuse' %}">Реестр списанных картриджей</a>
                             <hr>
                         {% endif %}
 
@@ -133,7 +135,7 @@
 
         <div class="row foot my-4 d-flex justify-content-end">
             <div class="col text-uppercase align-self-end text-end mt-2">
-                АО "Почта России" &nbsp; 2021-2022 &nbsp;
+                © АО Почта России, &nbsp; 2021-2022 &nbsp;
             </div>
         </div>
 

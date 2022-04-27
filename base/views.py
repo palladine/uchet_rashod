@@ -1,11 +1,11 @@
-import pickle
-
+from django.utils import formats
 from django.views import View
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddOPSFileForm,
-                    AddSupplyOPSForm, AddPartOPSForm, AddUserForm, AddGroupForm, AddPostofficeGroupForm, ShowOPSForm)
+                    AddSupplyOPSForm, AddPartOPSForm, AddUserForm, AddGroupForm, AddPostofficeGroupForm, ShowOPSForm,
+                    ShowRefuseForm, ShowRefuseFormUser)
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -240,7 +240,7 @@ class AddOPS(View):
         if 'single_ops' in request.POST:
             if form_ops.is_valid():
 
-                postoffice_name = request.POST.get('postoffice_name') if user.role == "1" else user.postoffice_id.postoffice_name
+                postoffice_name = request.POST.get('postoffice_name').split(' [')[0] if user.role == "1" else user.postoffice_id.postoffice_name
                 index = request.POST.get('index')
                 address = request.POST.get('address')
 
@@ -464,7 +464,7 @@ class AddSupply(View):
                 postoffice = request.POST.get('postoffice_name')
 
                 # save supply
-                supply = Supply(postoffice_recipient=postoffice)
+                supply = Supply(postoffice_recipient=postoffice.split(' [')[0])
                 supply.save()
 
                 messages.success(request,
@@ -725,7 +725,7 @@ class ShowCartridges(View):
         else:
             ### по аналогии с post !
             postoffice = user.postoffice_id
-            postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
+            postoffice_id = Postoffice.objects.get(postoffice_name=postoffice.postoffice_name.split(" [")[0]).pk
             query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
             states = []
             for q in query:
@@ -752,7 +752,7 @@ class ShowCartridges(View):
         context.update({'title': 'Картриджи на почтамте', 'form': form})
 
         if form.is_valid():
-            postoffice_name = request.POST.get('postoffice_name')
+            postoffice_name = request.POST.get('postoffice_name').split(" [")[0]
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice_name).pk
 
             query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
@@ -771,7 +771,7 @@ class ShowCartridges(View):
             messages.error(request, get_errors_form(form))
 
 
-        postoffice = request.user.postoffice_id
+        postoffice = request.user.postoffice_id.postoffice_name
         postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
 
         query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
@@ -1237,7 +1237,7 @@ class AddUser(View):
             last_name = request.POST.get('lastname')
             first_name = request.POST.get('firstname')
             middle_name = request.POST.get('middlename')
-            postoffice_name = request.POST.get('postoffice').split(" (")[0]
+            postoffice_name = request.POST.get('postoffice').split(" [")[0]
             postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
             group = postoffice.group
             email = request.POST.get('email')
@@ -1315,3 +1315,121 @@ class ShowSupply(View):
             context.update({'supplies': supplies_all, 'headers': headers})
 
         return render(request, 'showsupply.html', context=context)
+
+
+class ShowRefuse(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
+        context = {}
+        user = request.user
+
+        parts_final = request.session.get('sr_parts', False)
+        if parts_final:
+            request.session['sr_parts'] = False
+            context.update({'sr_parts': parts_final})
+
+        if user.role == '1':
+            form = ShowRefuseForm(user)
+        else:
+            form = ShowRefuseFormUser()
+            context.update({'num_active_supplies': request.session['num_active_supplies']})
+
+        context.update({'user': user, 'title': 'Реестр списанных картриджей', 'form': form})
+
+        return render(request, 'showrefuse.html', context=context)
+
+
+
+    def post(self, request):
+        context = {}
+
+        user = request.user
+        params_for_supplies = {}
+        params_for_opss = {}
+
+        if user.role == '1':
+            form = ShowRefuseForm(user, request.POST)
+
+            if form.is_valid():
+                postoffice_name = request.POST.get('postoffice', False)
+                if postoffice_name:
+                    postoffice_name = postoffice_name.split(" [")[0]
+                    postoffices = Postoffice.objects.filter(postoffice_name=postoffice_name)
+                else:
+                    if user.is_staff:
+                        postoffices = Postoffice.objects.all()
+                    else:
+                        postoffices = Postoffice.objects.filter(group=user.group)
+
+                params_for_opss.update({'postoffice__in': postoffices})
+
+            else:
+                messages.error(request, get_errors_form(form))
+
+        else:
+            form = ShowRefuseFormUser(request.POST)
+            context.update({'num_active_supplies': request.session['num_active_supplies']})
+
+            if form.is_valid():
+                postoffices = Postoffice.objects.filter(pk=user.postoffice_id.pk)
+                params_for_opss.update({'postoffice__in': postoffices})
+
+            else:
+                messages.error(request, get_errors_form(form))
+
+
+
+        date_s = request.POST.get('date_s', False)
+        date_p = request.POST.get('date_p', False)
+
+        if date_s:
+            params_for_supplies.update({'date_sending__date__gte': date_s})
+
+        if date_p:
+            params_for_supplies.update({'date_sending__date__lte': date_p})
+
+
+        parts_final = []
+        if 'f_cartridges' in request.POST:
+            opss = OPS.objects.filter(**params_for_opss)
+            supplies_ops = Supply_OPS.objects.filter(**params_for_supplies, ops_recipient__in=opss, status_sending=True)
+            parts_ops = Part_OPS.objects.filter(id_supply_ops__in=supplies_ops).order_by('cartridge')
+
+
+            parts_ops_cartridges_unique = []
+            for x in parts_ops:
+                if x.cartridge not in parts_ops_cartridges_unique:
+                    parts_ops_cartridges_unique.append(x.cartridge)
+
+
+
+            for p in parts_ops_cartridges_unique:
+                pfilter = parts_ops.filter(cartridge=p)
+                total = 0
+                mid = list()
+                for pf in pfilter:
+                    supid_user = pf.id_supply_ops.user_sender
+                    mid_name = supid_user.middle_name if supid_user.middle_name else ""
+                    user_name = "{0} {1} {2}".format(supid_user.last_name,
+                                                     supid_user.first_name,
+                                                     mid_name)
+
+
+                    mid.append([pf.id_supply_ops.pk,
+                                pf.id_supply_ops.ops_recipient.postoffice.postoffice_name,
+                                pf.id_supply_ops.ops_recipient.index,
+                                user_name,
+                                formats.date_format(pf.id_supply_ops.date_sending, "DATE_FORMAT"),
+                                pf.amount])
+                    total += pf.amount
+
+                parts_final.append([p.nomenclature, mid[:], total])
+
+            request.session['sr_parts'] = parts_final
+
+            return HttpResponseRedirect(reverse('show_refuse'))
+
+        context.update({'title': 'Реестр списанных картриджей', 'form': form, 'user': user, 'sr_parts': parts_final})
+        return render(request, 'showrefuse.html', context=context)

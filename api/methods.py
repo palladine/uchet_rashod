@@ -24,6 +24,8 @@ def getusers(data):
     groups = data.get("groups_id", False)
     postoffices = data.get("postoffices_id", False)
 
+    groups = [x for x in groups if isinstance(x, int)]
+
     if groups:
         pars.update({"group_id__in": groups})
 
