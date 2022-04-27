@@ -500,11 +500,14 @@ class AddUserForm(forms.Form):
     password = PasswordField(label='Пароль', help_text=ht, widget=forms.PasswordInput(
                                  attrs={'class': 'form-control form-control-sm', 'placeholder': 'ПАРОЛЬ'}))
 
-    lastname = AddUserLastnameField(label='Имя', max_length=100, help_text=ht, required=True,
-                       widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИМЯ', 'autocomplete': 'off'}))
+    firstname = AddUserFirstnameField(label='Имя', max_length=100, help_text=ht, required=True,
+                                      widget=forms.TextInput(
+                                          attrs={'class': 'form-control form-control-sm', 'placeholder': 'ИМЯ',
+                                                 'autocomplete': 'off'}))
 
-    firstname = AddUserFirstnameField(label='Фамилия', max_length=100, help_text=ht, required=True,
+    lastname = AddUserLastnameField(label='Фамилия', max_length=100, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ФАМИЛИЯ', 'autocomplete': 'off'}))
+
 
     middlename = AddUserMiddlenameField(label='Отчество', max_length=100, help_text=ht, required=True,
                        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'ОТЧЕСТВО', 'autocomplete': 'off'}))

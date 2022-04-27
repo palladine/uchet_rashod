@@ -1234,8 +1234,8 @@ class AddUser(View):
         if form.is_valid():
             login = request.POST.get('login')
             password = request.POST.get('password')
-            last_name = request.POST.get('lastname')
-            first_name = request.POST.get('firstname')
+            first_name = request.POST.get('firstname') # Имя
+            last_name = request.POST.get('lastname')   # Фамилия
             middle_name = request.POST.get('middlename')
             postoffice_name = request.POST.get('postoffice').split(" [")[0]
             postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
