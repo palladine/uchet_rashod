@@ -202,8 +202,8 @@ nav.head {
 }
 
 .menu {
-    min-width: 190px;
-    max-width: 190px;
+    min-width: 200px;
+    max-width: 200px;
     border-right: 1px solid rgba(144, 144, 144, 0.5);
     padding: 0px;
 }
@@ -215,6 +215,9 @@ nav.head {
     padding-top: 3px;
     padding-bottom: 4px;
     vertical-align: middle;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+
 }
 
 .content {
@@ -296,7 +299,7 @@ td_info {
 .badge {
     border-radius: 15px;
     padding-top: 2px;
-    padding-bottom: 2px;
+    padding-bottom: 1px;
     padding-left: 0.3rem;
     padding-right: 0.3rem;
     font-size: 0.7rem;

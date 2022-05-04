@@ -8,3 +8,7 @@ __pycache__
 /base/static/misc/acts
 /static
 /acc_materials/settings.py
+/tests
+/base/tests
+/api/tests
+/*/test*.py
