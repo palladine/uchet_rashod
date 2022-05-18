@@ -8,11 +8,20 @@
                         <div class="col-4 d-flex justify-content-center">
                             <div class="card text-center">
                                 <h4 class="card-header text-uppercase">{{ title }}</h4>
-                                <div class="card-body d-flex justify-content-center"></div>
+                                <div class="card-body d-flex justify-content-center">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-primary btn-sm col-12 shadow-none" type="submit" name="butsave">
+                                            ВЫГРУЗИТЬ
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4"></div>
                     </div>
+
+
 
 
                     <div class="row">

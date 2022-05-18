@@ -145,7 +145,7 @@ class Supply_OPS(BaseModel):
 
     class Meta:
         verbose_name = "Поставка ОПС"
-        verbose_name_plural = "Поставка ОПС"
+        verbose_name_plural = "Поставки ОПС"
 
     def __str__(self):
         return "Поставка №{0} (на ОПС {1})".format(self.pk, self.ops_recipient.index)

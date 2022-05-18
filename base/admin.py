@@ -44,7 +44,7 @@ class ShowOPSAdmin(admin.ModelAdmin):
 
 
 class ShowSupplyOPSAdmin(admin.ModelAdmin):
-    list_display = ['id', 'ops_recipient', 'user_sender', 'data_text', 'date_sending', 'status_sending' ]
+    list_display = [field.name for field in Supply_OPS._meta.fields]
 
 
 class ShowPartOPSAdmin(admin.ModelAdmin):

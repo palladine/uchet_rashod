@@ -873,7 +873,8 @@ class ShowOPS(View):
             postoffices = Postoffice.objects.filter(group=group)
             opss = OPS.objects.filter(postoffice__in=postoffices).order_by('index')
 
-            request.session['ops_ids'] = [o.pk for o in opss]
+            opsids = [o.pk for o in opss]
+            request.session['ops_ids'] = opsids
             return HttpResponseRedirect(reverse('show_ops'))
 
         else:
@@ -1074,7 +1075,7 @@ class ShowSupplyOPS(View):
 
 
         query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id, status_sending=True).order_by('-id')
-        headers = ['№<br>поставки', 'Индекс<br>ОПС', 'Отправитель', 'Данные поставки', 'Запрос Naumen', 'Дата отправки', 'Акт<br>распечатан', '']
+        headers = ['№ поставки', 'Индекс ОПС', 'Отправитель', 'Данные поставки', 'Запрос Naumen', 'Дата отправки', 'Акт распечатан', '']
 
         supplies = []
         for query_supply in query_supplies:
@@ -1208,6 +1209,64 @@ class ShowSupplyOPS(View):
             except Exception as e:
                 # messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
                 ...
+
+
+        if 'butsave' in request.POST:
+            query_supplies = Supply_OPS.objects.filter(ops_recipient__postoffice=user.postoffice_id,
+                                                       status_sending=True).order_by('id')
+            headers = ['№ поставки', 'Индекс ОПС', 'Отправитель', 'Данные поставки', 'Запрос Naumen', 'Дата отправки',
+                       'Акт распечатан']
+
+            supplies = []
+            for query_supply in query_supplies:
+                dt = "<br>".join(query_supply.data_text.split(';'))
+
+                supply = [query_supply.id,
+                          query_supply.ops_recipient.index,
+                          "{}<br>({} {})".format(query_supply.user_sender.username, query_supply.user_sender.first_name,
+                                                 query_supply.user_sender.last_name),
+                          dt,
+                          query_supply.id_task_naumen,
+                          query_supply.date_sending]
+
+
+                act = Act.objects.filter(id_supply_ops=query_supply)
+                if act:
+                    supply.append(act.first().status_act)
+                else:
+                    supply.append('')
+
+                supplies.append(supply)
+
+
+            filename_supplies = 'supplies_ops.xlsx'
+
+            new_wb = xl.Workbook()
+            ws = new_wb.active
+
+            for h in range(len(headers)):
+                ws_cell = ws.cell(1, h+1)
+                ws_cell.font = xl.styles.Font(bold=True)
+                ws_cell.value = headers[h]
+                column_dimensions = ws.column_dimensions[get_column_letter(h+1)]
+                if h == 3:
+                    column_dimensions.width = 30
+                else:
+                    column_dimensions.width = 20
+
+
+            for sp in range(len(supplies)):
+                for inx_sp in range(len(supplies[sp])):
+                    ws_cell = ws.cell(sp+2, inx_sp+1)
+                    ws_cell.value = str(supplies[sp][inx_sp]).replace('<br>', ' ')
+
+
+            mime_type, _ = mimetypes.guess_type(filename_supplies)
+            response = HttpResponse(content_type=mime_type)
+            response['Content-Disposition'] = 'attachment; filename={}'.format(filename_supplies)
+
+            new_wb.save(response)
+            return response
 
         return HttpResponseRedirect(reverse('show_supply_ops'))
 
