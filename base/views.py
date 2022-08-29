@@ -1704,6 +1704,7 @@ class ShowOrder(View):
             #return HttpResponseRedirect(reverse('show_order'))
         else:
             messages.error(request, get_errors_form(form))
-
+            form = ShowOrderForm(user)
+            context.update({'form': form})
 
         return render(request, 'showorder.html', context=context)
