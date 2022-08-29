@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group
+from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
+                     AutoOrder, Part_AutoOrder)
+
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -59,6 +61,15 @@ class ShowActAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Act._meta.get_fields()]
 
 
+class ShowAutoOrderAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'postoffice_autoorder', 'user_autoorder', 'month_year_for', 'date_sending', 'status_sending', ]
+
+
+class ShowPartAutoOrderAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Part_AutoOrder._meta.get_fields()]
+
+
+
 admin.site.register(Group, ShowGroupAdmin)
 admin.site.register(User, ShowUserAdmin)
 admin.site.register(Postoffice, ShowPostofficeAdmin)
@@ -71,3 +82,5 @@ admin.site.register(Supply_OPS, ShowSupplyOPSAdmin)
 admin.site.register(Part_OPS, ShowPartOPSAdmin)
 admin.site.register(State_OPS, ShowStateOPSAdmin)
 admin.site.register(Act, ShowActAdmin)
+admin.site.register(AutoOrder, ShowAutoOrderAdmin)
+admin.site.register(Part_AutoOrder, ShowPartAutoOrderAdmin)

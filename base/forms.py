@@ -280,6 +280,8 @@ class AmountField(CharField):
     def clean(self, value):
         if not value:
             raise ValidationError(('Поле "КОЛИЧЕСТВО" обязательное для заполнения'), code='empty')
+        if int(value) <= 0:
+            raise ValidationError(('Значение в поле "КОЛИЧЕСТВО" должно быть положительное'), code='negotive')
 
 class AddPartForm(forms.Form):
     supply = SupplyField(label='Поставка',
@@ -630,3 +632,78 @@ class ShowRefuseFormUser(forms.Form):
                                                'min': "2022-01-01",
                                                'max': "2099-01-01"}), localize=True)
 # --------------- End Show Refuse form User ---------------
+
+
+
+# --------------- Autoorder form part change ---------------
+class AmountPartField(CharField):
+    # Validation
+    def clean(self, value):
+        if value:
+            if not all(l.isdigit() for l in value):
+                raise ValidationError((''), code='isdigit')
+
+            if len(value) > 3:
+                raise ValidationError((''), code='length')
+        else:
+            raise ValidationError((''), code='empty')
+
+class AutoorderFormPartChange(forms.Form):
+    amount = AmountPartField(label="Количество", max_length=3, required=False,
+                         widget=forms.TextInput(attrs={'class': 'form-control form-control-sm px-1',
+                                                       'placeholder': '',
+                                                       'autocomplete': 'off'}))
+# --------------- End Autoorder form part change ---------------
+
+
+
+# --------------- Autoorder form new part change ---------------
+class AutoorderFormNewPart(forms.Form):
+    nomenclature_cartridge = NomenclaturePartField(label='Номенклатура картриджа',
+                                                   queryset=None,
+                                                   help_text=ht, required=False,
+                                                   to_field_name='nomenclature',
+                                                   widget=None)
+
+    amount_newpart = AmountField(label='Количество', max_length=3, required=False,
+                         widget=forms.NumberInput(
+                             attrs={'class': 'form-control form-control-sm px-1',
+                                    'placeholder': '',
+                                    'autocomplete': 'off'}))
+
+    def __init__(self, *args, **kwargs):
+        super(AutoorderFormNewPart, self).__init__(*args, **kwargs)
+        self.fields['nomenclature_cartridge'].widget = DataListWidget(
+            attrs={'class': 'form-select form-select-sm datalist', 'placeholder': 'НОМЕНКЛАТУРА ...'},
+            data_list=Cartridge.objects.all().order_by('nomenclature'),
+            name='datalist_cartridges')
+
+# --------------- End Autoorder form new part change ---------------
+
+
+
+# --------------- Show order form ----------------------------------
+class ShowOrderForm(forms.Form):
+    postoffice_name = PostofficeField(label='Почтамт',
+                                 queryset=None,
+                                 help_text=ht, required=True,
+                                 to_field_name='postoffice_name',
+                                 widget=None)
+
+    def __init__(self, user, *args, **kwargs):
+        super(ShowOrderForm, self).__init__(*args, **kwargs)
+
+        if user.is_staff:
+            qs = Postoffice.objects.all().order_by('group__group_name')
+        else:
+            qs = Postoffice.objects.filter(group=user.group).order_by('postoffice_name')
+
+        self.fields['postoffice_name'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
+                                                              'placeholder': 'ВЫБЕРИТЕ ПОЧТАМТ ...',
+                                                              'autocomplete': 'off'}, data_list=qs,
+                                                               name='datalist_postoffice', user=user)
+
+# --------------- End Show Cartridges ---------------
+
+
+

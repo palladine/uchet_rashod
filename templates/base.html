@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
+
+    <!-- <link rel="shortcut icon" href="{%  static 'favicon.png' %}"> -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
@@ -94,6 +97,7 @@
                             <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамте</a>
 
                         {% if user.role == '1' %}
+                            <a class="nav-link text-uppercase" href="{% url 'show_order' %}">Заказы почтамтов на поставку картриджей</a>
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_supply' %}">Реестр поставок на почтамты</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_refuse' %}">Реестр списанных картриджей</a>
@@ -104,7 +108,8 @@
 
 
                         {% if user.role == '2' %}
-                            <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Непринятые поставки
+                        <a class="nav-link text-uppercase" href="{% url 'add_order' %}">Заказ на поставку картриджей</a>
+                        <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Непринятые поставки
                             {% if num_active_supplies %}
                                 <span class="badge bg-primary ms-1 align-top">
                                     {{ num_active_supplies }}

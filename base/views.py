@@ -5,18 +5,19 @@ from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddOPSFileForm,
                     AddSupplyOPSForm, AddPartOPSForm, AddUserForm, AddGroupForm, AddPostofficeGroupForm, ShowOPSForm,
-                    ShowRefuseForm, ShowRefuseFormUser)
+                    ShowRefuseForm, ShowRefuseFormUser, AutoorderFormPartChange, AutoorderFormNewPart, ShowOrderForm)
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group
+from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
+                     AutoOrder, Part_AutoOrder)
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Count
 import pandas
 import openpyxl as xl
 from openpyxl.styles import Alignment, Side, Border, Font
 from openpyxl.utils.cell import coordinate_from_string, column_index_from_string, get_column_letter
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import mimetypes
 from acc_materials.settings import BASE_DIR, STATIC_ROOT
 
@@ -726,7 +727,7 @@ class ShowCartridges(View):
             ### по аналогии с post !
             postoffice = user.postoffice_id
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice.postoffice_name.split(" [")[0]).pk
-            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
+            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gte=0)
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
@@ -755,7 +756,7 @@ class ShowCartridges(View):
             postoffice_name = request.POST.get('postoffice_name').split(" [")[0]
             postoffice_id = Postoffice.objects.get(postoffice_name=postoffice_name).pk
 
-            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
+            query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gte=0)
 
             states = []
             for q in query:
@@ -774,7 +775,7 @@ class ShowCartridges(View):
         postoffice = request.user.postoffice_id.postoffice_name
         postoffice_id = Postoffice.objects.get(postoffice_name=postoffice).pk
 
-        query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gt=0)
+        query = State.objects.filter(postoffice_id=postoffice_id, total_amount__gte=0)
         states = []
         for q in query:
             states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
@@ -934,6 +935,7 @@ class AddSupplyOPS(View):
             {'title': 'Создать поставку картриджей на опс',
              'form_supply_ops': form_supply_ops,
              'form_part_ops': form_part_ops,
+             'num_active_supplies': request.session['num_active_supplies'],
              #'form_file_parts': form_file_parts,
              'user': user})
 
@@ -1492,3 +1494,216 @@ class ShowRefuse(View):
 
         context.update({'title': 'Реестр списанных картриджей', 'form': form, 'user': user, 'sr_parts': parts_final})
         return render(request, 'showrefuse.html', context=context)
+
+
+class AddOrder(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
+        user = request.user
+
+        form_part_change = AutoorderFormPartChange()
+        form_new_part = AutoorderFormNewPart()
+
+        context = {'user': user,
+                   'title': 'Заказ на поставку картриджей',
+                   'num_active_supplies': request.session['num_active_supplies'],
+                   'form': form_part_change,
+                   'form_new_part': form_new_part}
+
+        td = datetime.today()
+        last_day = td.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+        month_year_for = last_day.strftime("%m%Y")
+        order_active = AutoOrder.objects.filter(month_year_for=month_year_for, postoffice_autoorder=user.postoffice_id, status_sending=False).first()
+
+        if order_active:
+            autoorder_parts = Part_AutoOrder.objects.filter(id_autoorder=order_active)
+            context.update({'autoorder_parts': autoorder_parts,
+                            'autoorder_id': order_active.pk})
+
+        return render(request, 'addorder.html', context=context)
+
+
+    def post(self, request):
+
+        user = request.user
+        postoffice = user.postoffice_id
+        context = {'title': 'Заказ на поставку картриджей', 'user': user}
+
+        form_part_change = AutoorderFormPartChange(request.POST)
+        form_new_part = AutoorderFormNewPart(request.POST)
+
+        context.update({
+            'num_active_supplies': request.session['num_active_supplies'],
+            'form': form_part_change,
+            'form_new_part': form_new_part})
+
+        td = datetime.today()
+        last_day = td.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+        first_day = td.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=last_day.day)
+        month_year_for = last_day.strftime("%m%Y")
+
+
+        if 'autoformer' in request.POST:
+
+            order_active = AutoOrder.objects.filter(month_year_for=month_year_for).first()
+
+            if order_active == None:
+
+                opss_postoffice = OPS.objects.filter(postoffice=user.postoffice_id)
+
+                opss_supplies = Supply_OPS.objects.filter(ops_recipient__in=opss_postoffice,
+                                                          status_sending=True,
+                                                          date_sending__date__gte=first_day,
+                                                          date_sending__date__lte=last_day)
+
+                parts_supplies = Part_OPS.objects.filter(id_supply_ops__in=opss_supplies) \
+                    .values(cid=F('cartridge__id'), printer=F('cartridge__printer_model')) \
+                    .annotate(total_amount=Sum('amount')) \
+                    .order_by('-total_amount')
+
+                # create new AutoOrder
+                new_autoorder = AutoOrder(postoffice_autoorder=postoffice,
+                                          date_sending=datetime.now(),
+                                          month_year_for=month_year_for,
+                                          status_sending=False,
+                                          user_autoorder=user)
+                new_autoorder.save()
+
+                # create new Parts auto order
+                for part in parts_supplies:
+                    Cartridge.objects.get(id=part['cid'])
+                    new_part = Part_AutoOrder(cartridge=Cartridge.objects.get(id=part['cid']), amount=part['total_amount'], id_autoorder=new_autoorder)
+                    new_part.save()
+
+            else:
+                if order_active.status_sending != True:
+                    newparts = Part_AutoOrder.objects.filter(id_autoorder=order_active.pk, flag_n=True)
+                    if newparts.exists():
+                        newparts.delete()
+
+                    parts_active_autoorder = Part_AutoOrder.objects.filter(id_autoorder=order_active.pk)
+
+                    for p in parts_active_autoorder:
+                        p.add_amount = 0
+                        p.save()
+                else:
+                    messages.error(request, f'Автозаказ №{order_active.pk} на поставку картриджей был отправлен {order_active.date_sending.strftime("%d.%m.%Y в %H:%M:%S")}')
+
+            return HttpResponseRedirect(reverse('add_order'))
+
+
+        id_autopart = False
+        id_autoorder = False
+        for var in request.POST:
+            if var.startswith('autopart'):
+                id_autopart = var.split('_')[1]
+            if var.startswith('newpart'):
+                id_autoorder = var.split('_')[1]
+
+        if id_autopart:
+            if form_part_change.is_valid():
+                part_active = Part_AutoOrder.objects.filter(id=id_autopart).first()
+                part_addamount = int(request.POST.get('amount'))
+                part_addamount = 0 if part_addamount < 0 else part_addamount
+                part_active.add_amount += part_addamount
+                part_active.save()
+            return HttpResponseRedirect(reverse('add_order'))
+
+
+        if id_autoorder:
+            if form_new_part.is_valid():
+                nomenclature = request.POST.get('nomenclature_cartridge')
+                amount_newpart = request.POST.get('amount_newpart')
+
+                autoorder = AutoOrder.objects.get(pk=id_autoorder)
+                cartridge = Cartridge.objects.get(nomenclature=nomenclature)
+
+                part_ex = Part_AutoOrder.objects.filter(cartridge__nomenclature=nomenclature).first()
+                if part_ex:
+                    part_ex.add_amount += int(amount_newpart)
+                    part_ex.save()
+                else:
+                    new_part = Part_AutoOrder(id_autoorder=autoorder,
+                                              cartridge=cartridge,
+                                              amount=amount_newpart,
+                                              add_amount=0,
+                                              flag_n=True)
+                    new_part.save()
+
+                return HttpResponseRedirect(reverse('add_order'))
+            else:
+                messages.error(request, get_errors_form(form_new_part))
+
+
+
+        unsent_order = AutoOrder.objects.filter(month_year_for=month_year_for,
+                                                postoffice_autoorder=postoffice,
+                                                status_sending=False).first()
+
+        if 'sendautoorder' in request.POST:
+            num_parts = Part_AutoOrder.objects.filter(id_autoorder=unsent_order).count()
+            if unsent_order and num_parts > 0:
+                unsent_order.date_sending = datetime.now()
+                unsent_order.status_sending = True
+                unsent_order.save()
+                messages.success(request, f'Автозаказ №{unsent_order.pk} на поставку картриджей принят')
+            elif unsent_order and num_parts <= 0:
+                messages.error(request, f'В автозаказе №{unsent_order.pk} нет ни одной позиции')
+            else:
+                messages.error(request, f'Автозаказ не сформирован')
+
+            return HttpResponseRedirect(reverse('add_order'))
+
+
+        # all autoorder parts active
+        if unsent_order:
+            autoorder_parts = Part_AutoOrder.objects.filter(id_autoorder=unsent_order)
+            context.update({'autoorder_parts': autoorder_parts,
+                            'autoorder_id': unsent_order.pk})
+
+
+        return render(request, 'addorder.html', context=context)
+
+
+
+class ShowOrder(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
+        user = request.user
+        form = ShowOrderForm(user)
+        context = {'title': 'Заказы с почтамтов на поставку картриджей', 'user': user, 'form': form}
+
+        return render(request, 'showorder.html', context=context)
+
+    def post(self, request):
+
+        context = {}
+        user = request.user
+
+        form = ShowOrderForm(user, request.POST)
+        context.update({'title': 'Заказы с почтамтов на поставку картриджей'})
+
+        if form.is_valid():
+            postoffice_name = request.POST.get('postoffice_name').split(" [")[0]
+
+            postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
+            all_postoffice_orders = AutoOrder.objects.filter(postoffice_autoorder=postoffice, status_sending=True)
+
+            parts_by_orders = []
+            for order in all_postoffice_orders:
+                order_parts = Part_AutoOrder.objects.filter(id_autoorder=order)
+                parts_by_orders.append((order_parts, order.pk))
+
+            form = ShowOrderForm(user)
+            context.update({'parts_by_orders': parts_by_orders, 'postoffice': postoffice_name, 'form': form})
+
+            #return HttpResponseRedirect(reverse('show_order'))
+        else:
+            messages.error(request, get_errors_form(form))
+
+
+        return render(request, 'showorder.html', context=context)

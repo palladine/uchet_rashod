@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+        <div class="container-fluid">
+
+            <div class="row mt-5 mb-5">
+                <div class="col-4"></div>
+                <div class="col-4 d-flex justify-content-center">
+                    <div class="card text-center">
+                        <h4 class="card-header text-uppercase">{{ title }}</h4>
+
+                        <div class="card-body d-flex justify-content-center">
+                            <form action="{% url 'show_order' %}" method="post" class="col-11" novalidate>
+                                {% csrf_token %}
+
+                                <div class="mb-4">
+                                    {{ form.postoffice_name }}
+                                    <p class="ht">{{ form.postoffice_name.help_text }}</p>
+                                </div>
+
+                                <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" name='' type="submit">
+                                    Показать
+                                </button>
+                            </form>
+                        </div>
+
+
+                        <div class="card-footer">
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col"></div>
+
+                <div class="col-7">
+                    {% if parts_by_orders %}
+                            {% if postoffice %}
+
+                                {% for parts in parts_by_orders %}
+                                    <table class='table table-sm table-hover table-bordered align-middle mb-5'>
+                                        <thead>
+                                            <tr>
+                                                <th scope="row" colspan="3">Заказ № {{ parts.1 }} ({{ postoffice }})</th>
+                                            </tr>
+                                            <tr>
+                                                <th>Картридж</th>
+                                                <th>Модель принтера</th>
+                                                <th>Количество</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                           {% for part in parts.0 %}
+                                                <tr>
+                                                    <td class="td_nomenclature">{{ part.cartridge.nomenclature }}</td>
+                                                    <td>{{ part.cartridge.printer_model }}</td>
+                                                    <td class="td_amount">{{ part.amount|add:part.add_amount }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                {% endfor%}
+
+                            {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="col"></div>
+            </div>
+
+        </div>
+{% endblock %}

@@ -188,3 +188,45 @@ class Act(BaseModel):
 
     def __str__(self):
         return "Акт №{0}".format(self.pk)
+
+
+
+class AutoOrder(BaseModel):
+    postoffice_autoorder = models.ForeignKey('Postoffice', blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
+    user_autoorder = models.ForeignKey('User', blank=False, on_delete=models.PROTECT, verbose_name="Пользователь")
+    month_year_for = models.CharField(max_length=10, null=True, blank=False, verbose_name="Заказ за  месяц и год")
+    date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания и отправки", db_index=True)
+    status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
+
+    class Meta:
+        verbose_name = "Автозаказ"
+        verbose_name_plural = "Автозаказы"
+
+    def __str__(self):
+        return "Автозаказ №{0}".format(self.pk)
+
+
+
+class Part_AutoOrder(BaseModel):
+    id_autoorder = models.ForeignKey('AutoOrder', null=True, blank=False, on_delete=models.CASCADE, verbose_name="Автозаказ")
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
+    amount = models.PositiveIntegerField(default=0, null=False, blank=False, verbose_name="Количество")
+    add_amount = models.PositiveIntegerField(default=0, null=False, blank=False, verbose_name="Количество плюсом")
+    flag_n = models.BooleanField(default=False, null=False, blank=False, verbose_name="Новая позиция")
+
+    class Meta:
+        verbose_name = "Позиция в автозаказе"
+        verbose_name_plural = "Позиции в автозаказе"
+
+    def __str__(self):
+        return "Позиция №{0}".format(self.pk)
+
+
+
+
+
+
+
+
+
+

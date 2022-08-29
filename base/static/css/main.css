@@ -271,13 +271,18 @@ th, td {
 }
 
 .td_nomenclature {
-    min-width: 230px;
-    width: 230px;
+    min-width: 250px;
+    width: 250px;
 }
 
 .td_postoffice, .td_fio, .td_date {
     min-width: 170px;
     width: 170px;
+}
+
+.td_func {
+    min-width: 105px;
+    width: 105px;
 }
 
 .td_act {
