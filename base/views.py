@@ -1710,8 +1710,7 @@ class ShowOrder(View):
         context = {}
         user = request.user
 
-        context.update({'title': 'Заказы с почтамтов на поставку картриджей',
-                        'num_active_orders': request.session['num_active_orders']})
+        context.update({'title': 'Заказы с почтамтов на поставку картриджей', 'num_active_orders': request.session['num_active_orders']})
 
         id_autoorder = False
         for var in request.POST:
@@ -1722,7 +1721,11 @@ class ShowOrder(View):
             autoorder = AutoOrder.objects.get(pk=id_autoorder)
             autoparts = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
 
-            context.update({'autoorder': autoorder, 'autoparts': autoparts})
+            autoorder.viewed = True
+            autoorder.save()
+            request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True, viewed=False).count()
+
+            context.update({'autoorder': autoorder, 'autoparts': autoparts, 'num_active_orders': request.session['num_active_orders']})
 
             return render(request, 'showorder.html', context=context)
 
