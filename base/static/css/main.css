@@ -202,8 +202,8 @@ nav.head {
 }
 
 .menu {
-    min-width: 200px;
-    max-width: 200px;
+    min-width: 210px;
+    max-width: 210px;
     border-right: 1px solid rgba(144, 144, 144, 0.5);
     padding: 0px;
 }
