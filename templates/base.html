@@ -97,7 +97,13 @@
                             <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамте</a>
 
                         {% if user.role == '1' %}
-                            <a class="nav-link text-uppercase" href="{% url 'show_order' %}">Заказы почтамтов на поставку картриджей</a>
+                            <a class="nav-link text-uppercase" href="{% url 'show_order' %}">Заказы почтамтов на поставку картриджей
+                                {% if num_active_orders %}
+                                    <span class="badge bg-primary ms-1 align-top">
+                                        {{ num_active_orders }}
+                                    </span>
+                                {% endif %}
+                            </a>
                             <a class="nav-link text-uppercase" href="{% url 'add_supply' %}">Поставка картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_supply' %}">Реестр поставок на почтамты</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_refuse' %}">Реестр списанных картриджей</a>

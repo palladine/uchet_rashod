@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+        <div class="container-fluid">
+            <div class="row mt-5">
+                <div class="col-2"></div>
+                    <div class="col-8 d-flex justify-content-center">
+                        <div class="card text-center">
+                            <h4 class="card-header text-uppercase">{{ title }}</h4>
+
+                            <div class="card-body d-flex justify-content-center">
+
+                            </div>
+
+                        </div>
+                    </div>
+                <div class="col-2"></div>
+
+            </div>
+
+
+
+
+            <div class="row">
+                <div class="col"></div>
+
+                <div class="col-8">
+                    {% block content_2%}
+                        {% if orders %}
+
+                            <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
+                                <thead>
+                                    <tr>
+                                        <th>№ заявки</th>
+                                        <th>Почтамт</th>
+                                        <th>Пользователь</th>
+                                        <th>Картриджи</th>
+                                        <th>Дата заказа</th>
+                                        <th>Просмотрен</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for order in orders %}
+                                        <tr>
+                                            <td class="td_number">{{ order.0.pk }}</td>
+                                            <td>{{ order.0.postoffice_autoorder.postoffice_name }}</td>
+                                            <td>{{ order.0.user_autoorder.last_name }} {{ order.0.user_autoorder.first_name }} {{ order.0.user_autoorder.middle_name }}</td>
+                                            <td>{{ order.1 }}</td>
+                                            <td>{{ order.0.date_sending }}</td>
+                                            <td class="td_act">
+                                                    {% if order.0.viewed %}
+                                                        <i class="fa fa-check"></i>
+                                                    {% endif %}
+                                                </td>
+                                            <td>
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <div class="row d-flex justify-content-center mx-0 px-0">
+                                                        <button class="btn btn-outline-primary btn-xs col shadow-none text-uppercase px-1" type="submit" name="order_{{ order.0.pk }}">
+                                                            Перейти
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+
+                            </table>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+
+                <div class="col"></div>
+            </div>
+
+        </div>
+{% endblock %}

@@ -85,13 +85,17 @@ class Main(View):
             context = {'user': user,
                        'title': 'Главная'}
 
+            postoffice = user.postoffice_id.postoffice_name
             if user.role == '2':
-                postoffice = user.postoffice_id.postoffice_name
                 request.session['num_active_supplies'] = Supply.objects.filter(
                     postoffice_recipient=postoffice,
                     status_sending=True,
                     status_receiving=False).count()
                 context.update({'num_active_supplies': request.session['num_active_supplies']})
+
+            if user.role == '1':
+                request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True, viewed=False).count()
+                context.update({'num_active_orders': request.session['num_active_orders']})
 
             return render(request, 'main.html', context=context)
         else:
@@ -109,14 +113,14 @@ class AddGroup(View):
 
         form = AddGroupForm()
 
-        context.update({'user': user, 'title': 'Добавить группу', 'form': form})
+        context.update({'user': user, 'title': 'Добавить группу', 'form': form, 'num_active_orders': request.session['num_active_orders']})
         return render(request, 'addgroup.html', context=context)
 
 
     def post(self, request):
         context = {}
         form = AddGroupForm(request.POST)
-        context.update({'title': 'Добавление группы', 'form': form})
+        context.update({'title': 'Добавление группы', 'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if form.is_valid():
             group_name = request.POST.get('group_name')
@@ -147,7 +151,7 @@ class ShowUsers(View):
             else:
                 all_users = User.objects.filter(group=user.group).order_by('username')
 
-            context.update({'users': all_users})
+            context.update({'users': all_users, 'num_active_orders': request.session['num_active_orders']})
 
         return render(request, 'showusers.html', context=context)
 
@@ -165,7 +169,7 @@ class AddPostoffice(View):
         if user.is_staff:
             form = AddPostofficeGroupForm()
 
-        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form})
+        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form, 'num_active_orders': request.session['num_active_orders']})
         return render(request, 'addpostoffice.html', context=context)
 
 
@@ -175,7 +179,7 @@ class AddPostoffice(View):
         form = AddPostofficeForm(request.POST)
         if user.is_staff:
             form = AddPostofficeGroupForm(request.POST)
-        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form})
+        context.update({'user': user, 'title': 'Добавление почтамта', 'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if form.is_valid():
             group = user.group
@@ -209,7 +213,7 @@ class AddOPS(View):
 
         if user.role == '1':
             form_ops = AddOPSForm(user)
-            context.update({'form': form_ops})
+            context.update({'form': form_ops, 'num_active_orders': request.session['num_active_orders']})
 
         if user.role == '2':
             form_ops = AddOPSForm_U()
@@ -230,7 +234,7 @@ class AddOPS(View):
 
         if user.role == '1':
             form_ops = AddOPSForm(user, request.POST)
-            context.update({'form': form_ops})
+            context.update({'form': form_ops, 'num_active_orders': request.session['num_active_orders']})
 
         if user.role == '2':
             form_ops = AddOPSForm_U(request.POST)
@@ -328,7 +332,7 @@ class AddCartridge(View):
 
         context = {}
         user = request.user
-        context.update({'user': user, 'title': 'Добавление номенклатуры картриджа'})
+        context.update({'user': user, 'title': 'Добавление номенклатуры картриджа', 'num_active_orders': request.session['num_active_orders']})
 
         if user.role != '1':
             return render(request, 'main.html', context=context)
@@ -345,7 +349,9 @@ class AddCartridge(View):
 
         form_single = AddCartridgeForm(request.POST)
         form_multy = AddCartridgesFileForm(request.POST, request.FILES)
-        context.update({'title': 'Добавление номенклатуры картриджа', 'form_single': form_single, 'form_multy': form_multy})
+        context.update({'title': 'Добавление номенклатуры картриджа',
+                        'form_single': form_single, 'form_multy': form_multy,
+                        'num_active_orders': request.session['num_active_orders']})
 
         if 'single' in request.POST:
             if form_single.is_valid():
@@ -421,7 +427,8 @@ class AddSupply(View):
 
         context = {}
         user = request.user
-        context.update({'user': user, 'title': 'Создать поставку картриджей на почтамт'})
+        context.update({'user': user, 'title': 'Создать поставку картриджей на почтамт',
+                        'num_active_orders': request.session['num_active_orders']})
 
         if user.role != '1':
             return render(request, 'main.html', context=context)
@@ -458,7 +465,8 @@ class AddSupply(View):
              'form_supply': form_supply,
              'form_part': form_part,
              'form_file_parts': form_file_parts,
-             'user': user})
+             'user': user,
+             'num_active_orders': request.session['num_active_orders']})
 
         if 'but_supply' in request.POST:
             if form_supply.is_valid():
@@ -731,11 +739,14 @@ class ShowCartridges(View):
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
-            states.sort()
+            #states.sort()
+            states = sorted(states, key=lambda x: x[2], reverse=True)
+
+
 
         if user.role == '1':
             form = ShowCartridgesForm(user)
-            context.update({'form': form})
+            context.update({'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if user.role == '2':
             context.update({'num_active_supplies': request.session['num_active_supplies']})
@@ -750,7 +761,7 @@ class ShowCartridges(View):
         user = request.user
 
         form = ShowCartridgesForm(user, request.POST)
-        context.update({'title': 'Картриджи на почтамте', 'form': form})
+        context.update({'title': 'Картриджи на почтамте', 'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if form.is_valid():
             postoffice_name = request.POST.get('postoffice_name').split(" [")[0]
@@ -761,7 +772,8 @@ class ShowCartridges(View):
             states = []
             for q in query:
                 states.append([q.cartridge.nomenclature, q.cartridge.printer_model, q.total_amount])
-            states.sort()
+            #states.sort()
+            states = sorted(states, key=lambda x: x[2], reverse=True)
 
             request.session['states'] = states
             request.session['postoffice'] = postoffice_name
@@ -792,6 +804,9 @@ class ShowNomenclatures(View):
         context = {'title': 'Зарегистрированные номенклатуры картриджей'}
 
         user = request.user
+        if user.role == '1':
+            context.update({'num_active_orders': request.session['num_active_orders']})
+
         if user.role == '2':
             context.update({'num_active_supplies': request.session['num_active_supplies']})
 
@@ -835,7 +850,7 @@ class ShowOPS(View):
 
                 context.update({'form': form})
 
-            context.update({'title': 'Список зарегистрированных ОПС'})
+            context.update({'title': 'Список зарегистрированных ОПС', 'num_active_orders': request.session['num_active_orders']})
 
 
         if user.role == '2':
@@ -865,7 +880,7 @@ class ShowOPS(View):
         user = request.user
 
         form = ShowOPSForm(request.POST)
-        context.update({'title': 'Список зарегистрированных ОПС', 'form': form})
+        context.update({'title': 'Список зарегистрированных ОПС', 'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if form.is_valid():
             group_name = request.POST.get('group')
@@ -1282,7 +1297,7 @@ class AddUser(View):
         context = {}
         user = request.user
         form = AddUserForm(user)
-        context.update({'user': user, 'title': 'Добавление пользователя', 'form': form})
+        context.update({'user': user, 'title': 'Добавление пользователя', 'form': form, 'num_active_orders': request.session['num_active_orders']})
         return render(request, 'adduser.html', context=context)
 
 
@@ -1290,7 +1305,7 @@ class AddUser(View):
         context = {}
         user = request.user
         form = AddUserForm(user, request.POST)
-        context.update({'title': 'Добавление пользователя', 'form': form})
+        context.update({'title': 'Добавление пользователя', 'form': form, 'num_active_orders': request.session['num_active_orders']})
 
         if form.is_valid():
             login = request.POST.get('login')
@@ -1325,7 +1340,7 @@ class ShowSupply(View):
             return HttpResponseRedirect(reverse('login'))
 
         user = request.user
-        context = {'user': user, 'title': 'Реестр поставок на почтамты'}
+        context = {'user': user, 'title': 'Реестр поставок на почтамты', 'num_active_orders': request.session['num_active_orders']}
 
         if user.role != '1':
             return render(request, 'main.html', context=context)
@@ -1393,6 +1408,7 @@ class ShowRefuse(View):
 
         if user.role == '1':
             form = ShowRefuseForm(user)
+            context.update(({'num_active_orders': request.session['num_active_orders']}))
         else:
             form = ShowRefuseFormUser()
             context.update({'num_active_supplies': request.session['num_active_supplies']})
@@ -1412,6 +1428,7 @@ class ShowRefuse(View):
 
         if user.role == '1':
             form = ShowRefuseForm(user, request.POST)
+            context.update({'num_active_orders': request.session['num_active_orders']})
 
             if form.is_valid():
                 postoffice_name = request.POST.get('postoffice', False)
@@ -1547,7 +1564,7 @@ class AddOrder(View):
 
         if 'autoformer' in request.POST:
 
-            order_active = AutoOrder.objects.filter(month_year_for=month_year_for).first()
+            order_active = AutoOrder.objects.filter(month_year_for=month_year_for, postoffice_autoorder=postoffice).first()
 
             if order_active == None:
 
@@ -1674,37 +1691,43 @@ class ShowOrder(View):
             return HttpResponseRedirect(reverse('login'))
 
         user = request.user
-        form = ShowOrderForm(user)
-        context = {'title': 'Заказы с почтамтов на поставку картриджей', 'user': user, 'form': form}
+        all_orders = AutoOrder.objects.filter(status_sending=True)
+        list_orders = []
+        for order in all_orders:
+            order_parts = Part_AutoOrder.objects.filter(id_autoorder=order)
+            s = ''
+            for part in order_parts:
+                s += f'{part.cartridge.nomenclature}:{part.amount + part.add_amount}; '
+            list_orders.append((order, s))
 
-        return render(request, 'showorder.html', context=context)
+        context = {'title': 'Заказы с почтамтов на поставку картриджей', 'user': user,
+                   'orders': list_orders,
+                   'num_active_orders': request.session['num_active_orders']}
+        return render(request, 'showorders.html', context=context)
 
     def post(self, request):
 
         context = {}
         user = request.user
 
-        form = ShowOrderForm(user, request.POST)
-        context.update({'title': 'Заказы с почтамтов на поставку картриджей'})
+        context.update({'title': 'Заказы с почтамтов на поставку картриджей',
+                        'num_active_orders': request.session['num_active_orders']})
 
-        if form.is_valid():
-            postoffice_name = request.POST.get('postoffice_name').split(" [")[0]
+        id_autoorder = False
+        for var in request.POST:
+            if var.startswith('order'):
+                id_autoorder = var.split('_')[1]
 
-            postoffice = Postoffice.objects.get(postoffice_name=postoffice_name)
-            all_postoffice_orders = AutoOrder.objects.filter(postoffice_autoorder=postoffice, status_sending=True)
+        if id_autoorder:
+            autoorder = AutoOrder.objects.get(pk=id_autoorder)
+            autoparts = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
 
-            parts_by_orders = []
-            for order in all_postoffice_orders:
-                order_parts = Part_AutoOrder.objects.filter(id_autoorder=order)
-                parts_by_orders.append((order_parts, order.pk))
+            context.update({'autoorder': autoorder, 'autoparts': autoparts})
 
-            form = ShowOrderForm(user)
-            context.update({'parts_by_orders': parts_by_orders, 'postoffice': postoffice_name, 'form': form})
+            return render(request, 'showorder.html', context=context)
 
-            #return HttpResponseRedirect(reverse('show_order'))
-        else:
-            messages.error(request, get_errors_form(form))
-            form = ShowOrderForm(user)
-            context.update({'form': form})
 
-        return render(request, 'showorder.html', context=context)
+        if 'tolist' in request.POST:
+            return HttpResponseRedirect(reverse('show_order'))
+
+        return render(request, 'showorders.html', context=context)

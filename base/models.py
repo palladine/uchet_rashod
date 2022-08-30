@@ -197,6 +197,7 @@ class AutoOrder(BaseModel):
     month_year_for = models.CharField(max_length=10, null=True, blank=False, verbose_name="Заказ за  месяц и год")
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания и отправки", db_index=True)
     status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
+    viewed = models.BooleanField(default=False, verbose_name="Просмотрен")
 
     class Meta:
         verbose_name = "Автозаказ"
