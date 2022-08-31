@@ -1701,6 +1701,7 @@ class ShowOrder(View):
             for part in order_parts:
                 s += f'{part.cartridge.nomenclature}:{part.amount + part.add_amount}; '
             list_orders.append((order, s))
+            list_orders=sorted(list_orders, key=lambda x: x[0].pk, reverse=True)
 
         context = {'title': 'Заказы с почтамтов на поставку картриджей', 'user': user,
                    'orders': list_orders,
