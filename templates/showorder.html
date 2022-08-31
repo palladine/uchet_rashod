@@ -7,7 +7,7 @@
             <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
                 <thead>
                     <tr>
-                        <th colspan="2">Заявка на поставку картриджей № {{ autoorder.pk }} [{{ autoorder.postoffice_autoorder.postoffice_name }}]</th>
+                        <th colspan="2">Заказ на поставку картриджей № {{ autoorder.pk }} [{{ autoorder.postoffice_autoorder.postoffice_name }}]</th>
                         <th class="td_func">
                             <form method="post">
                                 {% csrf_token %}

@@ -388,6 +388,12 @@ class OPSField(ModelChoiceField):
             raise ValidationError(('Поле "ОПС" обязательное для заполнения'), code='empty')
 
 
+class TaskNaumenField(CharField):
+    def clean(self, value):
+        if value:
+            if not((value[0:2].lower() == 'rp' and value[2:].isdigit()) or value.isdigit()):
+                raise ValidationError(('Поле "НОМЕР ЗАПРОСА В NAUMEN" неправильного формата'), code='isdigit')
+
 class AddSupplyOPSForm(forms.Form):
     ops = OPSField(label='ОПС',
                    queryset=None,
@@ -395,7 +401,7 @@ class AddSupplyOPSForm(forms.Form):
                    widget=None)
 
 
-    task_naumen = forms.CharField(label='Номер запроса в Naumen', max_length=50, required=False,
+    task_naumen = TaskNaumenField(label='Номер запроса в Naumen', max_length=10, required=False,
                               widget=forms.TextInput(attrs={'class': 'form-control form-control-sm',
                                                             'placeholder': 'НОМЕР ЗАПРОСА В NAUMEN',
                                                             'autocomplete': 'off'}))

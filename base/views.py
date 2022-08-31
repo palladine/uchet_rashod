@@ -957,7 +957,7 @@ class AddSupplyOPS(View):
         if 'but_supply' in request.POST:
             if form_supply_ops.is_valid():
                 #ops = request.POST.get('ops')
-                ops = request.POST.get('new_ops')
+                ops = request.POST.get('new_ops')  # js
                 task_naumen = request.POST.get('task_naumen')
                 ops_obj = OPS.objects.get(pk=ops)
                 # save supply_ops
@@ -970,11 +970,13 @@ class AddSupplyOPS(View):
                 return HttpResponseRedirect(reverse('add_supply_ops'))
             else:
                 messages.error(request, get_errors_form(form_supply_ops), extra_tags='supply')
+                form_supply_ops = AddSupplyOPSForm(postoffice)
+                context.update({'form_supply_ops': form_supply_ops})
 
         if 'but_part' in request.POST:
             if form_part_ops.is_valid():
                 # id_supply = request.POST.get('supply_ops')
-                id_supply = request.POST.get('new_supply_ops')
+                id_supply = request.POST.get('new_supply_ops')  # js
                 supply_obj = Supply_OPS.objects.get(pk=id_supply)
 
                 nomenclature = request.POST.get('nomenclature_cartridge')
