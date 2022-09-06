@@ -198,6 +198,8 @@ class AutoOrder(BaseModel):
     date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания и отправки", db_index=True)
     status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
     viewed = models.BooleanField(default=False, verbose_name="Просмотрен")
+    workedout = models.BooleanField(default=False, verbose_name="Отработан")
+
 
     class Meta:
         verbose_name = "Автозаказ"

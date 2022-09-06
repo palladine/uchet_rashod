@@ -1007,8 +1007,12 @@ class AddSupplyOPS(View):
                     messages.error(request,
                                    f"Запрошенного количества картриджей ({nomenclature}) нет на почтамте (с учетом открытых поставок на ОПС). "
                                    f"Имеется {state_amount.total_amount - parts_amount}.", extra_tags='part')
+                    form_part_ops = AddPartOPSForm(postoffice)
+                    context.update({'form_part_ops': form_part_ops})
             else:
                 messages.error(request, get_errors_form(form_part_ops), extra_tags='part')
+                form_part_ops = AddPartOPSForm(postoffice)
+                context.update({'form_part_ops': form_part_ops})
 
 
         id_sup_send = False
@@ -1687,13 +1691,19 @@ class AddOrder(View):
 
 
 
-class ShowOrder(View):
+class ShowOrders(View):
     def get(self, request):
         if not request.user.is_authenticated:
             return HttpResponseRedirect(reverse('login'))
 
         user = request.user
-        all_orders = AutoOrder.objects.filter(status_sending=True)
+        context = {'user': user}
+
+        if user.role != '1':
+            return render(request, 'main.html', context=context)
+
+
+        all_orders = AutoOrder.objects.filter(status_sending=True, workedout=False)
         list_orders = []
         for order in all_orders:
             order_parts = Part_AutoOrder.objects.filter(id_autoorder=order)
@@ -1703,9 +1713,9 @@ class ShowOrder(View):
             list_orders.append((order, s))
             list_orders=sorted(list_orders, key=lambda x: x[0].pk, reverse=True)
 
-        context = {'title': 'Заказы с почтамтов на поставку картриджей', 'user': user,
+        context.update({'title': 'Заказы с почтамтов на поставку картриджей',
                    'orders': list_orders,
-                   'num_active_orders': request.session['num_active_orders']}
+                   'num_active_orders': request.session['num_active_orders']})
         return render(request, 'showorders.html', context=context)
 
     def post(self, request):
@@ -1716,9 +1726,13 @@ class ShowOrder(View):
         context.update({'title': 'Заказы с почтамтов на поставку картриджей', 'num_active_orders': request.session['num_active_orders']})
 
         id_autoorder = False
+        id_supply_autoorder = False
         for var in request.POST:
             if var.startswith('order'):
                 id_autoorder = var.split('_')[1]
+            if var.startswith('supplyby'):
+                id_supply_autoorder = var.split('_')[1]
+
 
         if id_autoorder:
             autoorder = AutoOrder.objects.get(pk=id_autoorder)
@@ -1733,7 +1747,31 @@ class ShowOrder(View):
             return render(request, 'showorder.html', context=context)
 
 
+        if id_supply_autoorder:
+
+            # create supply
+            autoorder = AutoOrder.objects.get(pk=id_supply_autoorder)
+            postoffice_autoorder = autoorder.postoffice_autoorder
+            new_supply = Supply(postoffice_recipient=postoffice_autoorder.postoffice_name)
+            new_supply.save()
+
+            # create supply parts
+            parts_autoorder = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
+            for part_autoorder in parts_autoorder:
+                new_part = Part(id_supply=new_supply.pk,
+                                postoffice=new_supply.postoffice_recipient,
+                                cartridge=part_autoorder.cartridge.nomenclature,
+                                amount=part_autoorder.amount+part_autoorder.add_amount)
+                new_part.save()
+
+            autoorder.workedout = True
+            autoorder.save()
+
+            return HttpResponseRedirect(reverse('show_orders'))
+
+
         if 'tolist' in request.POST:
-            return HttpResponseRedirect(reverse('show_order'))
+            return HttpResponseRedirect(reverse('show_orders'))
+
 
         return render(request, 'showorders.html', context=context)
