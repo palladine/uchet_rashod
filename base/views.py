@@ -5,7 +5,8 @@ from django.urls import reverse
 from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridgesFileForm, AddPartForm,
                     AddSupplyForm, ShowCartridgesForm, AddPartsFileForm, AddOPSForm, AddOPSForm_U, AddOPSFileForm,
                     AddSupplyOPSForm, AddPartOPSForm, AddUserForm, AddGroupForm, AddPostofficeGroupForm, ShowOPSForm,
-                    ShowRefuseForm, ShowRefuseFormUser, AutoorderFormPartChange, AutoorderFormNewPart, ShowOrderForm)
+                    ShowRefuseForm, ShowRefuseFormUser, AutoorderFormPartChange, AutoorderFormNewPart, ShowOrderForm,
+                    ChangeAmountAutoorderForm)
 from django.contrib.auth import authenticate, login, logout
 from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
                      AutoOrder, Part_AutoOrder)
@@ -497,6 +498,13 @@ class AddSupply(View):
                 part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature, amount=amount)
                 part.save()
 
+                # change state
+                a_sklad = Postoffice.objects.get(group=user.group, as_base=True)
+                state = State.objects.filter(postoffice=a_sklad, cartridge=part.cartridge)
+                state.blocked_amount += part.amount
+                state.total_amount -= part.amount
+                state.save()
+
                 messages.success(request,
                                  'Позиция в поставку ({}) добавлена.'.format(supply),
                                  extra_tags='part')
@@ -612,7 +620,18 @@ class AddSupply(View):
                 id_part_del = var.split('_')[1]
 
         if id_part_del:
-            Part.objects.filter(pk=id_part_del).delete()
+            part_del = Part.objects.get(pk=id_part_del)
+
+            # change state
+            a_sklad = Postoffice.objects.get(group=user.group, as_base=True)
+            pd_cartridge = Cartridge.objects.get(nomenclature=part_del.cartridge)
+            state = State.objects.get(postoffice=a_sklad, cartridge=pd_cartridge)
+            state.blocked_amount -= part_del.amount
+            state.total_amount += part_del.amount
+            state.save()
+
+            #Part.objects.filter(pk=id_part_del).delete()
+            part_del.delete()
             return HttpResponseRedirect(reverse('add_supply'))
 
         id_sup_del = False
@@ -621,8 +640,20 @@ class AddSupply(View):
                 id_sup_del = var.split('_')[1]
 
         if id_sup_del:
-            Part.objects.filter(id_supply=id_sup_del).delete()
-            Supply.objects.get(pk=id_sup_del).delete()
+            sup_del = Supply.objects.get(pk=id_sup_del)
+            parts_del = Part.objects.filter(id_supply=id_sup_del)
+            a_sklad = Postoffice.objects.get(group=user.group, as_base=True)
+
+
+            for part_del in parts_del:
+                pd_cartridge = Cartridge.objects.get(nomenclature=part_del.cartridge)
+                state = State.objects.get(postoffice=a_sklad, cartridge=pd_cartridge)
+                state.blocked_amount -= part_del.amount
+                state.total_amount += part_del.amount
+                state.save()
+
+            parts_del.delete()
+            sup_del.delete()
             return HttpResponseRedirect(reverse('add_supply'))
 
 
@@ -678,7 +709,7 @@ class ApplySupply(View):
             supply.status_receiving = True
 
 
-            # change State
+            # change States
             postoffice_apply = Postoffice.objects.get(postoffice_name=supply.postoffice_recipient)
 
             active_parts = Part.objects.filter(id_supply=supply.pk)
@@ -690,6 +721,13 @@ class ApplySupply(View):
                     else:
                         state.total_amount += part.amount
                     state.save()
+
+                    active_group = user.postoffice_id.group
+                    sklad = Postoffice.objects.get(group=active_group, as_base=True)
+                    state_sklad = State.objects.get(postoffice=sklad, cartridge=cartridge_apply)
+                    state_sklad.blocked_amount -= part.amount
+
+                    state_sklad.save()
 
             supply.save()  # !!!! after all actions
 
@@ -1703,7 +1741,7 @@ class ShowOrders(View):
             return render(request, 'main.html', context=context)
 
 
-        all_orders = AutoOrder.objects.filter(status_sending=True, workedout=False)
+        all_orders = AutoOrder.objects.filter(status_sending=True)
         list_orders = []
         for order in all_orders:
             order_parts = Part_AutoOrder.objects.filter(id_autoorder=order)
@@ -1722,56 +1760,122 @@ class ShowOrders(View):
 
         context = {}
         user = request.user
-
         context.update({'title': 'Заказы с почтамтов на поставку картриджей', 'num_active_orders': request.session['num_active_orders']})
+
+
+        if 'tolist' in request.POST:
+            return HttpResponseRedirect(reverse('show_orders'))
 
         id_autoorder = False
         id_supply_autoorder = False
+        id_changepart = False
         for var in request.POST:
             if var.startswith('order'):
                 id_autoorder = var.split('_')[1]
             if var.startswith('supplyby'):
                 id_supply_autoorder = var.split('_')[1]
+            if var.startswith('change'):
+                id_changepart = var.split('_')[1]
 
+
+        autoorder = None
 
         if id_autoorder:
             autoorder = AutoOrder.objects.get(pk=id_autoorder)
-            autoparts = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
-
             autoorder.viewed = True
             autoorder.save()
-            request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True, viewed=False).count()
-
-            context.update({'autoorder': autoorder, 'autoparts': autoparts, 'num_active_orders': request.session['num_active_orders']})
-
-            return render(request, 'showorder.html', context=context)
 
 
         if id_supply_autoorder:
-
             # create supply
             autoorder = AutoOrder.objects.get(pk=id_supply_autoorder)
             postoffice_autoorder = autoorder.postoffice_autoorder
-            new_supply = Supply(postoffice_recipient=postoffice_autoorder.postoffice_name)
-            new_supply.save()
+            autoparts_to_sup = Part_AutoOrder.objects.annotate(sum_amount=F('amount')+F('add_amount')).filter(id_autoorder=autoorder, sum_amount__gt=0)
 
-            # create supply parts
-            parts_autoorder = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
-            for part_autoorder in parts_autoorder:
-                new_part = Part(id_supply=new_supply.pk,
-                                postoffice=new_supply.postoffice_recipient,
-                                cartridge=part_autoorder.cartridge.nomenclature,
-                                amount=part_autoorder.amount+part_autoorder.add_amount)
-                new_part.save()
+            if not autoorder.workedout:
+                # find sklad
+                a_group = user.group
+                a_sklad = Postoffice.objects.get(group=a_group, as_base=True)
 
-            autoorder.workedout = True
-            autoorder.save()
+                flag_validate = all([(part_autoorder.amount+part_autoorder.add_amount) <= State.objects.get(postoffice=a_sklad,
+                                                                                                          cartridge=part_autoorder.cartridge).total_amount
+                                     for part_autoorder in autoparts_to_sup])
 
-            return HttpResponseRedirect(reverse('show_orders'))
+                if flag_validate:
+                    new_supply = Supply(postoffice_recipient=postoffice_autoorder.postoffice_name)
+                    new_supply.save()
+
+                    # create supply parts
+                    for part_autoorder in autoparts_to_sup:
+                        tot_amount = part_autoorder.amount+part_autoorder.add_amount
+
+                        new_part = Part(id_supply=new_supply.pk,
+                                        postoffice=new_supply.postoffice_recipient,
+                                        cartridge=part_autoorder.cartridge.nomenclature,
+                                        amount=tot_amount)
 
 
-        if 'tolist' in request.POST:
-            return HttpResponseRedirect(reverse('show_orders'))
+                        state = State.objects.get(postoffice=a_sklad, cartridge=part_autoorder.cartridge)
+                        state.blocked_amount += tot_amount
+                        state.total_amount -= tot_amount
+                        state.save()
+
+                        new_part.save()
+
+                    autoorder.workedout = True
+                    autoorder.save()
+
+                    return HttpResponseRedirect(reverse('show_orders'))
+                else:
+                    messages.error(request,f'Количество картриджей в поставке не должно превышать количества картриджей на складе')
+            else:
+                messages.error(request, f'Поставка по данному заказу была создана раннее')
+
+
+        if id_changepart:
+            form_changeamount = ChangeAmountAutoorderForm(request.POST)
+            changepart = Part_AutoOrder.objects.get(pk=id_changepart)
+            autoorder = changepart.id_autoorder
+            if form_changeamount.is_valid():
+                p_amount = int(request.POST.get('new_amount'))
+
+                # change amount active part
+                changepart.add_amount = 0
+                changepart.amount = p_amount
+                changepart.save()
+
+            else:
+                messages.error(request, get_errors_form(form_changeamount))
+
+
+
+        # global context
+        autoparts = Part_AutoOrder.objects.filter(id_autoorder=autoorder)
+
+        autoparts_list = []
+        for autopart in autoparts:
+            cartridge = autopart.cartridge
+
+            active_group = user.postoffice_id.group
+            sklad = Postoffice.objects.get(group=active_group, as_base=True)
+
+            state_cart_sklad = State.objects.filter(postoffice=sklad, cartridge=cartridge)
+            amount_sklad = state_cart_sklad.first().total_amount if state_cart_sklad.exists() else 0
+
+            npart = (autopart, amount_sklad)
+
+            autoparts_list.append(npart)
+
+            request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True,
+                                                                            viewed=False).count()
+
+            context.update({'autoorder': autoorder, 'autoparts_list': autoparts_list,
+                            'num_active_orders': request.session['num_active_orders'],
+                            'form_changeamount': ChangeAmountAutoorderForm()})
+
+            return render(request, 'showorder.html', context=context)
+        # end global context
+
 
 
         return render(request, 'showorders.html', context=context)

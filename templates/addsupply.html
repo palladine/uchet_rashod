@@ -172,8 +172,8 @@
                         <table class='table table-sm table-hover table-bordered align-middle mb-5'>
                             <thead>
                                 <tr>
-                                    <th scope="row" colspan="3">{{ sup.0 }}</th>
-                                    <td class="td_but">
+                                    <th scope="row" colspan="2">{{ sup.0 }}</th>
+                                    <td class="">
                                         <form method="post">
                                             {% csrf_token %}
                                             <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase" type="submit" name="butsupdel_{{ sup.0.pk }}">
@@ -187,10 +187,9 @@
                             <tbody>
                                 {% for p in sup.1 %}
                                 <tr>
-                                    <td class="td_postoffice">{{ p.postoffice }}</td>
-                                    <td class="td_nomenclature">{{ p.cartridge }}</td>
+                                    <td class="">{{ p.cartridge }}</td>
                                     <td class="td_amount">{{ p.amount }}</td>
-                                    <td>
+                                    <td class="td_but">
                                         <form method="post">
                                             {% csrf_token %}
                                             <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase" type="submit" name="butpartdel_{{ p.pk }}">
@@ -198,7 +197,7 @@
                                             </button>
                                         </form>
                                     </td>
-                                    </tr>
+                                </tr>
                                 {% endfor %}
                             </tbody>
 

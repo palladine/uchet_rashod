@@ -16,9 +16,7 @@
                         </div>
                     </div>
                 <div class="col-2"></div>
-
             </div>
-
 
 
             <div class="row">
@@ -37,6 +35,7 @@
                                         <th>Картриджи</th>
                                         <th>Дата заказа</th>
                                         <th>Просмотрен</th>
+                                        <th>Отработан</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -53,7 +52,12 @@
                                                     {% if order.0.viewed %}
                                                         <i class="fa fa-check"></i>
                                                     {% endif %}
-                                                </td>
+                                            </td>
+                                            <td class="td_act">
+                                                {% if order.0.workedout %}
+                                                        <i class="fa fa-check"></i>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 <form method="post">
                                                     {% csrf_token %}

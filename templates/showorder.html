@@ -3,17 +3,17 @@
 {% block content_2 %}
 
     <div class="align-self-center">
-        {% if autoparts %}
-            <table class='table table-sm table-hover table-bordered align-middle text-center mb-5'>
+        {% if autoparts_list %}
+            <table class='table table-sm table-hover table-bordered align-middle text-center'>
                 <thead>
                     <tr>
-                        <th colspan="2">Заказ на поставку картриджей № {{ autoorder.pk }} [{{ autoorder.postoffice_autoorder.postoffice_name }}]</th>
-                        <th class="td_func">
+                        <th colspan="3">Заказ на поставку картриджей № {{ autoorder.pk }} [{{ autoorder.postoffice_autoorder.postoffice_name }}]</th>
+                        <th class="td_func" colspan="2">
                             <form method="post">
                                 {% csrf_token %}
                                     <div class="row d-flex justify-content-center mx-0 px-0">
                                         <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="tolist">
-                                            К списку
+                                            К списку заказов
                                         </button>
                                     </div>
                             </form>
@@ -24,22 +24,44 @@
                         <th class="td_nomenclature">Картридж</th>
                         <th>Принтер</th>
                         <th>Количество</th>
+                        <th>Изменить<br>количество</th>
+                        <th>В наличии</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {% for autopart in autoparts %}
+                    {% for autopart in autoparts_list %}
                         <tr>
-                            <td>{{ autopart.cartridge.nomenclature }}</td>
-                            <td>{{ autopart.cartridge.printer_model }}</td>
-                            <td>{{ autopart.amount|add:autopart.add_amount }}</td>
+                            <td>{{ autopart.0.cartridge.nomenclature }}</td>
+                            <td>{{ autopart.0.cartridge.printer_model }}</td>
+                            {% with autopart.0.amount|add:autopart.0.add_amount as summ %}
+                                <td>{{ summ }}</td>
+                                <td class="td_func">
+                                    <form method="post">
+                                    {% csrf_token %}
+                                        <div class="row d-flex justify-content-center mx-0 px-0">
+                                            <div class="col-8 px-0">
+                                                {{ form_changeamount.new_amount }}
+                                            </div>
+                                            <button class="btn btn-outline-primary btn-xs col-4 shadow-none text-uppercase px-1" type="submit" name="change_{{ autopart.0.pk }}">
+                                                <i class="fa fa-rotate-left"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </td>
+                                {% if summ > autopart.1 %}
+                                    <td class="td_warning">{{ autopart.1 }}</td>
+                                {% else %}
+                                    <td>{{ autopart.1 }}</td>
+                                {% endif %}
+                            {% endwith %}
                         </tr>
                     {% endfor %}
                 </tbody>
 
                 <tfoot>
                     <tr>
-                        <td colspan="3">
+                        <td colspan="5">
                             <form method="post">
                                 {% csrf_token %}
                                     <div class="row d-flex justify-content-end mx-0 px-0">
@@ -55,5 +77,33 @@
         {% endif %}
 
     </div>
+
+    <div class="row">
+            <div class="col-4"></div>
+
+            <div class="col-4 d-flex justify-content-center text-center">
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="success mt-2 mb-2">
+                                <i class="fa fa-check"></i>&nbsp;
+                                {{ message|safe }}
+                            </div>
+                        {% endif %}
+
+                        {% if message.tags == 'error' %}
+                            <div class="error mt-2 mb-2">
+                                <i class="fa fa-exclamation"></i>&nbsp;
+                                {{ message|safe }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="col-4"></div>
+        </div>
+
+
 
 {% endblock %}

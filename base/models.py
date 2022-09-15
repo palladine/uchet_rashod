@@ -53,6 +53,7 @@ class Postoffice(BaseModel):
     index = models.CharField(max_length=6, null=True, blank=True, default='', verbose_name="Индекс")
     address = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name="Адрес")
     group = models.ForeignKey("Group", null=True, blank=False, on_delete=models.SET_NULL, verbose_name="Группа")
+    as_base = models.BooleanField(default=False, verbose_name="Роль склада в группе")
 
     class Meta:
         verbose_name = "Почтамт"
@@ -113,6 +114,7 @@ class State(BaseModel):
     postoffice = models.ForeignKey('Postoffice', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Почтамт")
     cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
     total_amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество")
+    blocked_amount = models.IntegerField(default=0, null=False, blank=False, verbose_name="Количество заблокированное поставками")
 
     class Meta:
         verbose_name = "Учет картриджей"

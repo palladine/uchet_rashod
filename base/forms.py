@@ -280,7 +280,7 @@ class AmountField(CharField):
     def clean(self, value):
         if not value:
             raise ValidationError(('Поле "КОЛИЧЕСТВО" обязательное для заполнения'), code='empty')
-        if int(value) <= 0:
+        if int(value) < 0:
             raise ValidationError(('Значение в поле "КОЛИЧЕСТВО" должно быть положительное'), code='negotive')
 
 class AddPartForm(forms.Form):
@@ -712,4 +712,11 @@ class ShowOrderForm(forms.Form):
 # --------------- End Show Cartridges ---------------
 
 
-
+# --------------- Change amount autoorder form ------
+class ChangeAmountAutoorderForm(forms.Form):
+    new_amount = AmountField(label='Количество', max_length=3, required=False,
+                                 widget=forms.NumberInput(
+                                     attrs={'class': 'form-control form-control-sm px-1',
+                                            'placeholder': '',
+                                            'autocomplete': 'off'}))
+# --------------- End change amount autoorder -------
