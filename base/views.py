@@ -1665,7 +1665,7 @@ class AddOrder(View):
 
         if id_autopart:
             if form_part_change.is_valid():
-                part_active = Part_AutoOrder.objects.filter(id=id_autopart).first()
+                part_active = Part_AutoOrder.objects.get(id=id_autopart)
                 part_addamount = int(request.POST.get('amount'))
                 part_addamount = 0 if part_addamount < 0 else part_addamount
                 part_active.add_amount += part_addamount
@@ -1749,7 +1749,7 @@ class ShowOrders(View):
             for part in order_parts:
                 s += f'{part.cartridge.nomenclature}:{part.amount + part.add_amount}; '
             list_orders.append((order, s))
-            list_orders=sorted(list_orders, key=lambda x: x[0].pk, reverse=True)
+            list_orders = sorted(list_orders, key=lambda x: x[0].pk, reverse=True)
 
         context.update({'title': 'Заказы с почтамтов на поставку картриджей',
                    'orders': list_orders,
@@ -1866,16 +1866,32 @@ class ShowOrders(View):
 
             autoparts_list.append(npart)
 
-            request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True,
-                                                                            viewed=False).count()
+        request.session['num_active_orders'] = AutoOrder.objects.filter(status_sending=True,
+                                                                        viewed=False).count()
 
-            context.update({'autoorder': autoorder, 'autoparts_list': autoparts_list,
-                            'num_active_orders': request.session['num_active_orders'],
-                            'form_changeamount': ChangeAmountAutoorderForm()})
-
-            return render(request, 'showorder.html', context=context)
+        context.update({'autoorder': autoorder, 'autoparts_list': autoparts_list,
+                        'num_active_orders': request.session['num_active_orders'],
+                        'form_changeamount': ChangeAmountAutoorderForm()})
         # end global context
 
 
 
-        return render(request, 'showorders.html', context=context)
+        return render(request, 'showorder.html', context=context)
+
+
+
+class MoveCartridges(View):
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
+        user = request.user
+        context = {'user': user}
+
+        return render(request, 'movecartridges.html', context=context)
+
+
+
+    def post(self, request):
+        ...

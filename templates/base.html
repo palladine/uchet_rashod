@@ -93,7 +93,7 @@
                             <a class="nav-link text-uppercase" href="{% url 'add_ops' %}">Добавить ОПС</a>
                             <hr>
 
-
+                            <a class="nav-link text-uppercase" href="{% url 'move_cartridges' %}">Перемещение картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамте</a>
 
                         {% if user.role == '1' %}
@@ -114,8 +114,8 @@
 
 
                         {% if user.role == '2' %}
-                        <a class="nav-link text-uppercase" href="{% url 'add_order' %}">Заказ на поставку картриджей</a>
-                        <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Непринятые поставки
+                            <a class="nav-link text-uppercase" href="{% url 'add_order' %}">Заказ на поставку картриджей</a>
+                            <a class="nav-link text-uppercase" href="{% url 'apply_supply' %}">Непринятые поставки
                             {% if num_active_supplies %}
                                 <span class="badge bg-primary ms-1 align-top">
                                     {{ num_active_supplies }}

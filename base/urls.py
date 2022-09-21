@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (Main, AddPostoffice, AddCartridge, AddSupply, ApplySupply,
                     ShowCartridges, ShowUsers, ShowNomenclatures, AddOPS, ShowOPS,
                     AddSupplyOPS, ShowSupplyOPS, AddUser, ShowSupply, AddGroup,
-                    ShowRefuse, AddOrder, ShowOrders)
+                    ShowRefuse, AddOrder, ShowOrders, MoveCartridges)
 
 urlpatterns = [
     path('', Main.as_view(), name='main'),
@@ -24,4 +24,5 @@ urlpatterns = [
     path('show_refuse', ShowRefuse.as_view(), name='show_refuse'),
     path('add_order', AddOrder.as_view(), name='add_order'),
     path('show_orders', ShowOrders.as_view(), name='show_orders'),
+    path('move_cartridges', MoveCartridges.as_view(), name='move_cartridges'),
 ]
