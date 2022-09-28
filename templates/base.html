@@ -93,6 +93,10 @@
                             <a class="nav-link text-uppercase" href="{% url 'add_ops' %}">Добавить ОПС</a>
                             <hr>
 
+                        {% if user.role == '1' %}
+                            <a class="nav-link text-uppercase" href="{% url 'add_tostock' %}">Поставка на склад</a>
+                        {% endif%}
+
                             <a class="nav-link text-uppercase" href="{% url 'move_cartridges' %}">Перемещение картриджей на почтамт</a>
                             <a class="nav-link text-uppercase" href="{% url 'show_cartridges' %}">Остатки картриджей на почтамте</a>
 

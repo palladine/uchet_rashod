@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="container-fluid">
+
+        <div class="row mt-5">
+            <div class="col-2"></div>
+            <div class="col-8 d-flex justify-content-center">
+                <div class="card text-center">
+                    <h4 class="card-header text-uppercase">{{ title }}</h4>
+
+                    <div class="card-body d-flex justify-content-center">
+                        <form method="post">
+                            {% csrf_token %}
+                                <button class="btn btn-outline-primary btn-sm col-12 shadow-none text-uppercase" type="submit" name="addstock">
+                                    Создать поставку на склад
+                                </button>
+                        </form>
+                    </div>
+
+                    <div class="card-footer">
+
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-2"></div>
+        </div>
+
+        {% if list_supplies_stock %}
+        {% for supply in list_supplies_stock %}
+        <div class="row mt-5 d-flex justify-content-center">
+            <div class="col"></div>
+            <div class="col-9 d-flex justify-content-center">
+                                        <table class='table table-sm table-hover table-bordered align-middle text-center mb-2'>
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="3">{{ supply.0 }}</th>
+                                                    <form method="post">
+                                                        {% csrf_token %}
+                                                        <th class="td_func">
+                                                            <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="delsup_{{ supply.0.pk }}">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        </th>
+                                                    </form>
+                                                </tr>
+                                                <tr>
+                                                        <th class="td_nomenclature">Картридж</th>
+                                                        <th>Модель принтера</th>
+                                                        <th class="td_amount">Количество</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if supply.1 %}
+                                                    {% for part in supply.1 %}
+                                                        <tr>
+                                                            <td>{{ part.cartridge.nomenclature }}</td>
+                                                            <td>{{ part.cartridge.printer_model }}</td>
+                                                            <td>{{ part.amount }}</td>
+                                                            <form method="post">
+                                                                {% csrf_token %}
+                                                                <td>
+                                                                <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="delpart_{{ part.pk }}">
+                                                                    <i class="fa fa-times"></i>
+                                                                </button>
+                                                                </td>
+                                                            </form>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% endif %}
+
+                                                <tr>
+                                                    <form method="post">
+                                                        {% csrf_token %}
+                                                            <td>{{ form.nomenclature_cartridge }}</td>
+                                                            <td></td>
+                                                            <td>{{ form.amount_newpart }}</td>
+                                                            <td class="td_func">
+                                                                <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="newpartstock_{{ supply.0.pk }}">
+                                                                    Добавить
+                                                                </button>
+                                                            </td>
+                                                    </form>
+                                                </tr>
+                                            </tbody>
+
+                                            <tfoot>
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <td colspan="2"></td>
+                                                    <td colspan="2">
+                                                        <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="sendsup_{{ supply.0.pk }}">
+                                                            Отправить
+                                                        </button>
+                                                    </td>
+                                                </form>
+                                            </tfoot>
+                                        </table>
+
+            </div>
+            <div class="col"></div>
+        </div>
+
+
+        <div class="row mb-1">
+                        <div class="col"></div>
+
+                        <div class="col-4 d-flex justify-content-center text-center">
+                                {% if messages %}
+                                    {% for message in messages %}
+                                            {% with supply.0.pk|stringformat:"i" as idsup %}
+                                                    {% if message.tags == "addpart_"|add:idsup|add:" error" or message.tags == "sendsup_"|add:idsup|add:" error" %}
+                                                        <div class="error mt-2 mb-2">
+                                                            <i class="fa fa-exclamation"></i>&nbsp;
+                                                            {{ message|safe }}
+                                                        </div>
+                                                    {% endif %}
+                                            {% endwith %}
+                                    {% endfor %}
+                                {% endif %}
+                        </div>
+
+                        <div class="col"></div>
+        </div>
+
+
+
+        {% endfor %}
+        {% endif %}
+
+    </div>
+{% endblock %}

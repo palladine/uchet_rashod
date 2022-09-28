@@ -309,9 +309,14 @@ class AddPartForm(forms.Form):
         self.fields['supply'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                 'placeholder': 'ВЫБЕРИТЕ ПОСТАВКУ ...',
                                                 'autocomplete': 'off'}, data_list=qs, name='datalist_supply')
+
+        sklad_po = Postoffice.objects.get(as_base=True)
+        cartridges_sklad = State.objects.filter(postoffice=sklad_po, total_amount__gt=0)
+        ctr = [c.cartridge.nomenclature for c in cartridges_sklad]
+        self.fields['nomenclature_cartridge'].queryset = Cartridge.objects.filter(nomenclature__in=ctr)
         self.fields['nomenclature_cartridge'].widget = DataListWidget(attrs={'class': 'form-select form-select-sm datalist',
                                                                                 'placeholder': 'ВЫБЕРИТЕ НОМЕНКЛАТУРУ ...'},
-                                                                         data_list=Cartridge.objects.all().order_by('nomenclature'),
+                                                                         data_list=Cartridge.objects.filter(nomenclature__in=ctr).order_by('nomenclature'),
                                                                       name='datalist_cartridges')
 # --------------- End Add Part  ---------------
 

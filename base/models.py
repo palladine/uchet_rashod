@@ -229,6 +229,31 @@ class Part_AutoOrder(BaseModel):
 
 
 
+class Supply_Stock(BaseModel):
+    user_sender = models.ForeignKey('User', blank=False, on_delete=models.PROTECT, verbose_name="Пользователь")
+    date_sending = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания и отправки", db_index=True)
+    status_sending = models.BooleanField(default=False, verbose_name="Статус отправки")
+
+    class Meta:
+        verbose_name = "Поставка на склад"
+        verbose_name_plural = "Поставки на склад"
+
+    def __str__(self):
+        return "Поставка на склад №{0}".format(self.pk)
+
+
+
+class Part_Stock(BaseModel):
+    supply_stock = models.ForeignKey('Supply_Stock', null=True, blank=False, on_delete=models.CASCADE, verbose_name="Поставка на склад")
+    cartridge = models.ForeignKey('Cartridge', null=True, blank=False, on_delete=models.PROTECT, verbose_name="Картридж")
+    amount = models.PositiveIntegerField(default=0, null=False, blank=False, verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Позиция в поставке на склад"
+        verbose_name_plural = "Позиции в поставке на склад"
+
+    def __str__(self):
+        return "Позиция в поставке на склад №{0}".format(self.pk)
 
 
 

@@ -193,7 +193,7 @@ a.nav-link:hover, a.nav-link:focus {
 
 nav.head {
     min-width: 1250px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     border-bottom: 1px solid rgba(144, 144, 144, 0.5);
 }
 
@@ -212,7 +212,7 @@ nav.head {
 }
 
 .nav-link {
-    font-size: 0.73rem;
+    font-size: 0.7rem;
     text-align: end;
     border: 1px solid transparent;
     padding-top: 3px;

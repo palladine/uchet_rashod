@@ -9,7 +9,7 @@ from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridge
                     ChangeAmountAutoorderForm)
 from django.contrib.auth import authenticate, login, logout
 from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
-                     AutoOrder, Part_AutoOrder)
+                     AutoOrder, Part_AutoOrder, Supply_Stock, Part_Stock)
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.db.models import F, Sum, Count
@@ -492,23 +492,35 @@ class AddSupply(View):
                 supply = Supply.objects.get(pk=id_supply)
 
                 nomenclature = request.POST.get('nomenclature_cartridge')
+                active_cartridge = Cartridge.objects.get(nomenclature=nomenclature)
                 amount = request.POST.get('amount')
 
-                # save Part
-                part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature, amount=amount)
-                part.save()
-
-                # change state
                 a_sklad = Postoffice.objects.get(group=user.group, as_base=True)
-                state = State.objects.filter(postoffice=a_sklad, cartridge=part.cartridge)
-                state.blocked_amount += part.amount
-                state.total_amount -= part.amount
-                state.save()
+                state = State.objects.get(postoffice=a_sklad, cartridge=active_cartridge)
 
-                messages.success(request,
-                                 'Позиция в поставку ({}) добавлена.'.format(supply),
-                                 extra_tags='part')
-                return HttpResponseRedirect(reverse('add_supply'))
+                if int(amount) <= state.total_amount:
+                # save Part
+                    part = Part(id_supply=id_supply, postoffice=supply.postoffice_recipient, cartridge=nomenclature, amount=amount)
+                    part.save()
+
+                    # change state
+                    state.blocked_amount += int(part.amount)
+                    state.total_amount -= int(part.amount)
+                    state.save()
+
+
+                    messages.success(request,
+                                     'Позиция в поставку ({}) добавлена.'.format(supply), extra_tags='part')
+                    return HttpResponseRedirect(reverse('add_supply'))
+                else:
+                    messages.error(request,
+                                   f"Запрошенного количества картриджей ({nomenclature}) нет на складе. "
+                                   f"Имеется {state.total_amount}.", extra_tags='part')
+
+                    form_part = AddPartForm(user)
+                    context.update({'form_part': form_part})
+
+
             else:
                 messages.error(request, get_errors_form(form_part), extra_tags='part')
 
@@ -1878,6 +1890,129 @@ class ShowOrders(View):
 
         return render(request, 'showorder.html', context=context)
 
+
+
+class AddToStock(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+
+        user = request.user
+
+        form = AutoorderFormNewPart()
+
+        context = {'title': 'Поставка на склад', 'user': user, 'form': form}
+
+
+        list_supplies_stock = []
+        supplies_stock = Supply_Stock.objects.filter(status_sending=False)
+        for sup in supplies_stock:
+            sup_parts = Part_Stock.objects.filter(supply_stock=sup)
+            list_supplies_stock.append((sup, sup_parts))
+
+        context.update({'list_supplies_stock': list_supplies_stock})
+
+
+        return render(request, 'addtostock.html', context=context)
+
+
+
+    def post(self, request):
+        context = {}
+        user = request.user
+        context.update({'title': 'Поставка на склад',
+                        'num_active_orders': request.session['num_active_orders']})
+
+        form = AutoorderFormNewPart(request.POST)
+
+        if 'addstock' in request.POST:
+            new_supply_stock = Supply_Stock(user_sender=user)
+            new_supply_stock.save()
+            return HttpResponseRedirect(reverse('add_tostock'))
+
+        id_supply_stock_newpart = False
+        id_supply_stock_delsup = False
+        id_supply_stock_delpart = False
+        id_supply_stock_sendsup = False
+        for var in request.POST:
+            if var.startswith('newpartstock'):
+                id_supply_stock_newpart = var.split('_')[1]
+            if var.startswith('delsup'):
+                id_supply_stock_delsup = var.split('_')[1]
+            if var.startswith('delpart'):
+                id_supply_stock_delpart = var.split('_')[1]
+            if var.startswith('sendsup'):
+                id_supply_stock_sendsup = var.split('_')[1]
+
+
+        if id_supply_stock_newpart:
+            if form.is_valid():
+                nomenclature = request.POST.get('nomenclature_cartridge')
+                amount = request.POST.get('amount_newpart')
+
+                supply_stock = Supply_Stock.objects.get(pk=id_supply_stock_newpart)
+                cartridge = Cartridge.objects.get(nomenclature=nomenclature)
+
+                ex_part = Part_Stock.objects.filter(supply_stock=supply_stock, cartridge=cartridge).first()
+                if ex_part:
+                    ex_part.amount += int(amount)
+                    ex_part.save()
+                else:
+                    new_part = Part_Stock(supply_stock=supply_stock, cartridge=cartridge, amount=amount)
+                    new_part.save()
+
+                return HttpResponseRedirect(reverse('add_tostock'))
+
+            else:
+                messages.error(request, get_errors_form(form), extra_tags=f'addpart_{id_supply_stock_newpart}')
+
+
+        if id_supply_stock_delpart:
+            delpart = Part_Stock.objects.get(pk=id_supply_stock_delpart)
+            delpart.delete()
+
+
+        if id_supply_stock_delsup:
+            sup_todel = Supply_Stock.objects.get(pk=id_supply_stock_delsup)
+            parts_todel = Part_Stock.objects.filter(supply_stock=sup_todel)
+            for part in parts_todel:
+                part.delete()
+            sup_todel.delete()
+
+
+        if id_supply_stock_sendsup:
+            active_supply = Supply_Stock.objects.get(pk=id_supply_stock_sendsup)
+            active_parts = Part_Stock.objects.filter(supply_stock=active_supply)
+
+            if active_parts:
+                sklad = Postoffice.objects.get(as_base=True)
+                for part in active_parts:
+                    active_state = State.objects.filter(postoffice=sklad, cartridge=part.cartridge).first()
+                    if active_state:
+                        active_state.total_amount += int(part.amount)
+                        active_state.save()
+                    else:
+                        new_state = State(postoffice=sklad, cartridge=part.cartridge, total_amount=int(part.amount))
+                        new_state.save()
+
+                active_supply.user_sender = user
+                active_supply.date_sending = datetime.now()
+                active_supply.status_sending = True
+                active_supply.save()
+            else:
+                messages.error(request, 'Невозможно отправить пустую поставку', extra_tags=f'sendsup_{id_supply_stock_sendsup}')
+
+        list_supplies_stock = []
+        supplies_stock = Supply_Stock.objects.filter(status_sending=False)
+        for sup in supplies_stock:
+            sup_parts = Part_Stock.objects.filter(supply_stock=sup)
+            list_supplies_stock.append((sup, sup_parts))
+
+        context.update({'list_supplies_stock': list_supplies_stock, 'form': form})
+
+
+
+        return render(request, 'addtostock.html', context=context)
 
 
 class MoveCartridges(View):
