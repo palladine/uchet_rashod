@@ -87,15 +87,17 @@
                                             </tbody>
 
                                             <tfoot>
-                                                <form method="post">
-                                                    {% csrf_token %}
-                                                    <td colspan="2"></td>
-                                                    <td colspan="2">
-                                                        <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="sendsup_{{ supply.0.pk }}">
-                                                            Отправить
-                                                        </button>
-                                                    </td>
-                                                </form>
+                                                <tr>
+                                                    <form method="post">
+                                                        {% csrf_token %}
+                                                        <td colspan="2"></td>
+                                                        <td colspan="2">
+                                                            <button class="btn btn-outline-primary btn-xs col-12 shadow-none text-uppercase px-1" type="submit" name="sendsup_{{ supply.0.pk }}">
+                                                                Отправить
+                                                            </button>
+                                                        </td>
+                                                    </form>
+                                                </tr>
                                             </tfoot>
                                         </table>
 

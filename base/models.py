@@ -185,11 +185,25 @@ class Act(BaseModel):
     status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
 
     class Meta:
-        verbose_name = "Акт"
-        verbose_name_plural = "Акты"
+        verbose_name = "Акт поставки на ОПС"
+        verbose_name_plural = "Акты поставок на ОПС"
 
     def __str__(self):
-        return "Акт №{0}".format(self.pk)
+        return "Акт поставки на ОПС №{0}".format(self.pk)
+
+
+
+class Act_Postoffice(BaseModel):
+    id_supply = models.ForeignKey('Supply', null=True, blank=False, on_delete=models.CASCADE, verbose_name="Поставка")
+    date_creating = models.DateTimeField(null=True, blank=False, verbose_name="Дата создания", db_index=True)
+    status_act = models.BooleanField(default=False, verbose_name="Статус распечатанного акта")
+
+    class Meta:
+        verbose_name = "Акт поставки на почтамт"
+        verbose_name_plural = "Акты поставок на почтамт"
+
+    def __str__(self):
+        return "Акт поставки на почтамт №{0}".format(self.pk)
 
 
 

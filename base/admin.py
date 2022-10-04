@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
-                     AutoOrder, Part_AutoOrder, Supply_Stock, Part_Stock)
+from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act,
+                     Act_Postoffice, Group, AutoOrder, Part_AutoOrder, Supply_Stock, Part_Stock)
 
 from django.contrib.auth.admin import UserAdmin
 
@@ -30,8 +30,9 @@ class ShowCartridgeAdmin(admin.ModelAdmin):
 
 
 class ShowSupplyAdmin(admin.ModelAdmin):
-    list_display = [field.name for field in Supply._meta.get_fields()]
-
+    #list_display = [field.name for field in Supply._meta.get_fields()]
+    list_display = ['pk', 'postoffice_recipient', 'user_sender', 'user_recipient', 'data_text',
+                    'date_sending', 'date_receiving', 'status_sending', 'status_receiving']
 
 class ShowPartAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Part._meta.get_fields()]
@@ -59,6 +60,9 @@ class ShowStateOPSAdmin(admin.ModelAdmin):
 
 class ShowActAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Act._meta.get_fields()]
+
+class ShowActPostofficeAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'id_supply', 'date_creating', 'status_act']
 
 
 class ShowAutoOrderAdmin(admin.ModelAdmin):
@@ -92,6 +96,7 @@ admin.site.register(Supply_OPS, ShowSupplyOPSAdmin)
 admin.site.register(Part_OPS, ShowPartOPSAdmin)
 admin.site.register(State_OPS, ShowStateOPSAdmin)
 admin.site.register(Act, ShowActAdmin)
+admin.site.register(Act_Postoffice, ShowActPostofficeAdmin)
 admin.site.register(AutoOrder, ShowAutoOrderAdmin)
 admin.site.register(Part_AutoOrder, ShowPartAutoOrderAdmin)
 admin.site.register(Supply_Stock, ShowSuppliesStockAdmin)

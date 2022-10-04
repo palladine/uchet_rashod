@@ -8,8 +8,8 @@ from .forms import (LoginForm, AddPostofficeForm, AddCartridgeForm, AddCartridge
                     ShowRefuseForm, ShowRefuseFormUser, AutoorderFormPartChange, AutoorderFormNewPart, ShowOrderForm,
                     ChangeAmountAutoorderForm)
 from django.contrib.auth import authenticate, login, logout
-from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act, Group,
-                     AutoOrder, Part_AutoOrder, Supply_Stock, Part_Stock)
+from .models import (User, Postoffice, Cartridge, Supply, Part, State, OPS, Supply_OPS, Part_OPS, State_OPS, Act,
+                     Act_Postoffice, Group, AutoOrder, Part_AutoOrder, Supply_Stock, Part_Stock)
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.db.models import F, Sum, Count
@@ -1203,7 +1203,7 @@ class ShowSupplyOPS(View):
             supply_obj = Supply_OPS.objects.get(id=id_sup_act)
             act_obj, act_created = Act.objects.get_or_create(id_supply_ops=supply_obj)
             if act_created:
-                act_obj.date_creating=datetime.now()
+                act_obj.date_creating = datetime.now()
                 act_obj.status_act = False
                 act_obj.save()
 
@@ -1409,8 +1409,6 @@ class ShowSupply(View):
         if user.is_staff:
             query_supplies = Supply.objects.filter(status_sending=True).order_by('-id')
 
-        headers = ['№<br>поставки', 'Почтамт', 'Отправил', 'Получил', 'Данные поставки', 'Дата отправки', 'Дата приемки', 'Принята']
-
         supplies = []
         for query_supply in query_supplies:
             dt = "<br>".join(query_supply.data_text.split(';'))
@@ -1421,6 +1419,10 @@ class ShowSupply(View):
             dr = query_supply.date_receiving
             date_r = dr if dr else ''
 
+            act = Act_Postoffice.objects.filter(id_supply=query_supply.pk)
+            status = ''
+            if act.exists():
+                status = act.first().status_act
 
             supply = [query_supply.id,
                       query_supply.postoffice_recipient,
@@ -1429,7 +1431,8 @@ class ShowSupply(View):
                       dt,
                       date_s,
                       date_r,
-                      query_supply.status_receiving]
+                      query_supply.status_receiving,
+                      status]
 
             supplies.append(supply)
 
@@ -1444,7 +1447,107 @@ class ShowSupply(View):
             except EmptyPage:
                 supplies_all = paginator.page(paginator.num_pages)
 
-            context.update({'supplies': supplies_all, 'headers': headers})
+            context.update({'supplies': supplies_all})
+
+        return render(request, 'showsupply.html', context=context)
+
+    def post(self, request):
+
+        user = request.user
+        context = {'user': user, 'title': 'Реестр поставок на почтамты', 'num_active_orders': request.session['num_active_orders']}
+
+
+        supply_id = False
+        for var in request.POST:
+            if var.startswith('supply'):
+                supply_id = var.split('_')[1]
+
+        if supply_id:
+            supply_obj = Supply.objects.get(id=supply_id)
+            act_obj, act_created = Act_Postoffice.objects.get_or_create(id_supply=supply_obj)
+            if act_created:
+                act_obj.date_creating = datetime.now()
+                act_obj.status_act = False
+                act_obj.save()
+
+            path = os.path.join(STATIC_ROOT, 'misc/')
+            path_acts = os.path.join(STATIC_ROOT, 'misc/acts/')
+            filename = 'template_act.xlsx'
+            new_filename = f"act_{act_obj.pk}_{act_obj.date_creating.date()}.xlsx"
+
+            new_wb = None
+            if os.path.exists(path_acts + new_filename):
+                new_wb = xl.load_workbook(path_acts + new_filename)
+            else:
+                # copy to new excel file
+                wb = xl.load_workbook(path + filename)
+                new_wb = wb
+
+                ws = new_wb.active
+                ws['F2'] = act_obj.pk
+                ws['H2'] = act_obj.date_creating.date().strftime("%d.%m.%Y")
+                username_sender = supply_obj.user_sender.split(' ')[0]
+                user_sender = User.objects.get(username=username_sender)
+                ws['E4'] = "{} {} {}".format(user_sender.last_name, user_sender.first_name, user_sender.middle_name)
+                ws['E5'] = f"{supply_obj.postoffice_recipient}"
+                ws['H6'] = datetime.now().strftime("%d.%m.%Y %H:%M")
+                #ws['H8'] = supply_obj.id_task_naumen
+
+                c = 0
+                for pos in supply_obj.data_text.split(";"):
+                    if pos:
+                        point = 12 + c
+                        elist = pos.split(":")
+                        ws.insert_rows(point)
+                        cell_range = 'C{0}:G{0}'.format(point)
+                        ws.merge_cells(cell_range)
+
+                        brd = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'),
+                                     bottom=Side(style='thin'))
+                        fnt = Font(name="Times New Roman", size=11)
+                        ws['B{}'.format(point)] = c + 1
+                        ws['B{}'.format(point)].alignment = Alignment(horizontal='center')
+                        ws['B{}'.format(point)].border = brd
+                        ws['B{}'.format(point)].font = fnt
+                        ws['C{}'.format(point)] = elist[0]
+                        ws['H{}'.format(point)] = elist[1]
+                        ws['H{}'.format(point)].alignment = Alignment(horizontal='center')
+                        ws['H{}'.format(point)].border = brd
+                        ws['H{}'.format(point)].font = fnt
+
+                        # border merge cell
+                        start_cell, end_cell = cell_range.split(':')
+                        start_coord = coordinate_from_string(start_cell)
+                        start_row = start_coord[1]
+                        start_col = column_index_from_string(start_coord[0])
+                        end_coord = coordinate_from_string(end_cell)
+                        end_row = end_coord[1]
+                        end_col = column_index_from_string(end_coord[0])
+
+                        for row in range(start_row, end_row + 1):
+                            for col_idx in range(start_col, end_col + 1):
+                                col = get_column_letter(col_idx)
+                                ws['{}{}'.format(col, row)].border = brd
+                                ws['{}{}'.format(col, row)].font = fnt
+                        c += 1
+                new_wb.save(filename=path_acts + new_filename)
+
+
+            try:
+                file = open(path_acts+new_filename, 'rb')
+                mime_type, _ = mimetypes.guess_type(path_acts+new_filename)
+                response = HttpResponse(file, content_type=mime_type)
+                response['Content-Disposition'] = 'attachment; filename={}'.format(new_filename)
+
+                act_obj.status_act = True
+                act_obj.save()
+                return response
+            except Exception as e:
+                # messages.error(request, 'Ошибка скачивания файла ({})'.format(e), extra_tags='download_template_cartridges')
+                ...
+
+            #return HttpResponseRedirect(reverse('show_supply'))
+
 
         return render(request, 'showsupply.html', context=context)
 
